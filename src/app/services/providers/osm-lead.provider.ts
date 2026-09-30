@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, throwError } from 'rxjs';
 import { Lead } from '../../models/lead.model';
 import { BusinessCategory, GeoLocation, SearchCriteria } from '../../models/search.model';
+import { boundingBox, distanceKm } from '../../utils/geo.utils';
 import { isMobilePhone, splitPhones } from '../../utils/phone.utils';
 import { buildMapsUrl, humanize } from '../../utils/text.utils';
 import { LeadSearchError } from '../lead-search.error';
@@ -17,8 +18,10 @@ export interface OverpassElement {
   tags?: Record<string, string>;
 }
 
-interface OverpassResponse {
+export interface OverpassResponse {
   elements: OverpassElement[];
+  /** Set when the query failed server-side (e.g. timeout) while still returning HTTP 200. */
+  remark?: string;
 }
 
 /** Overpass tag selectors per category. Every selector also requires a `name` tag. */
@@ -36,20 +39,37 @@ const CATEGORY_SELECTORS: Record<BusinessCategory, string[]> = {
   ],
 };
 
+/** Server-side limit; kept below typical browser/proxy timeouts so errors surface quickly. */
+const QUERY_TIMEOUT_S = 30;
+
 /** Tag keys checked (in order) to derive a business type label. */
 const TYPE_KEYS = ['shop', 'amenity', 'healthcare', 'office', 'craft', 'tourism', 'leisure'];
 
 /** Builds the Overpass QL query for the selected categories around a point. */
 export function buildOverpassQuery(location: GeoLocation, criteria: SearchCriteria): string {
-  const around = `(around:${Math.round(criteria.radiusKm * 1000)},${location.latitude},${location.longitude})`;
+  // A global [bbox] lets Overpass use its spatial index first. `(around:...)` per statement
+  // with broad filters like ["shop"] was timing out (>60 s) on overpass-api.de.
+  // The circle is applied client-side afterwards (see `withinRadius`).
+  const bbox = boundingBox(location.latitude, location.longitude, criteria.radiusKm).join(',');
   const selectors = new Set(
     criteria.categories.flatMap((category) => CATEGORY_SELECTORS[category]),
   );
-  const statements = [...selectors]
-    .map((selector) => `  nwr${selector}["name"]${around};`)
-    .join('\n');
+  const statements = [...selectors].map((selector) => `  nwr${selector}["name"];`).join('\n');
   // `out center tags` returns a centre point for ways/relations so every lead has coordinates.
-  return `[out:json][timeout:60];\n(\n${statements}\n);\nout center tags;`;
+  return `[out:json][timeout:${QUERY_TIMEOUT_S}][bbox:${bbox}];\n(\n${statements}\n);\nout center tags;`;
+}
+
+/** Overpass answers HTTP 200 with a `remark` like "runtime error: Query timed out..." on failure. */
+export function hasRuntimeError(response: OverpassResponse): boolean {
+  return /runtime error/i.test(response.remark ?? '');
+}
+
+/** Keeps leads inside the search circle (the bbox corners are further than the radius). */
+export function withinRadius(lead: Lead, location: GeoLocation, radiusKm: number): boolean {
+  if (lead.latitude === null || lead.longitude === null) return true;
+  return (
+    distanceKm(location.latitude, location.longitude, lead.latitude, lead.longitude) <= radiusKm
+  );
 }
 
 /** Maps a raw Overpass element to a Lead. Exported for unit tests. */
@@ -124,9 +144,15 @@ export class OsmLeadProvider implements LeadProvider {
             ),
         ),
       ),
-      map((response) =>
-        response.elements.map(mapOverpassElement).filter((lead): lead is Lead => lead !== null),
-      ),
+      map((response) => {
+        if (hasRuntimeError(response)) {
+          throw new LeadSearchError('ERRORS.PROVIDER_TIMEOUT', response.remark);
+        }
+        return response.elements
+          .map(mapOverpassElement)
+          .filter((lead): lead is Lead => lead !== null)
+          .filter((lead) => withinRadius(lead, location, criteria.radiusKm));
+      }),
     );
   }
 }

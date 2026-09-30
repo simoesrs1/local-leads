@@ -73,6 +73,7 @@
   "ERRORS.LOCALITY_NOT_FOUND": "Localidade não encontrada. Tenta outro nome (ex.: \"Leiria, Portugal\").",
   "ERRORS.GEOCODING_FAILED": "Não foi possível localizar a localidade. Verifica a ligação e tenta novamente.",
   "ERRORS.PROVIDER_BUSY": "A fonte de dados está ocupada. Tenta novamente daqui a um minuto.",
+  "ERRORS.PROVIDER_TIMEOUT": "A pesquisa demorou demasiado. Tenta um raio menor ou menos categorias.",
   "ERRORS.PROVIDER_FAILED": "A fonte de dados devolveu um erro. Tenta um raio menor ou menos categorias.",
   "ERRORS.GOOGLE_KEY_MISSING": "O Google Places precisa de uma API key em src/environments/environment.ts.",
   "ERRORS.GENERIC": "Algo correu mal. Tenta novamente."

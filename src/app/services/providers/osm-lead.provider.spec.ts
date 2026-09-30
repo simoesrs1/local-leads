@@ -1,15 +1,46 @@
-import { buildOverpassQuery, mapOverpassElement } from './osm-lead.provider';
+import { Lead } from '../../models/lead.model';
+import {
+  buildOverpassQuery,
+  hasRuntimeError,
+  mapOverpassElement,
+  withinRadius,
+} from './osm-lead.provider';
+
+const leiria = { displayName: 'Leiria', latitude: 39.74, longitude: -8.81 };
 
 describe('OSM provider helpers', () => {
-  it('builds an around query with one statement per unique selector', () => {
-    const query = buildOverpassQuery(
-      { displayName: 'Leiria', latitude: 39.74, longitude: -8.81 },
-      { locality: 'Leiria', categories: ['shops', 'services'], radiusKm: 2, source: 'osm' },
+  it('builds a bbox query with one statement per unique selector', () => {
+    const query = buildOverpassQuery(leiria, {
+      locality: 'Leiria',
+      categories: ['shops', 'services'],
+      radiusKm: 2,
+      source: 'osm',
+    });
+    expect(query).toMatch(
+      /^\[out:json\]\[timeout:30\]\[bbox:39\.72\d*,-8\.83\d*,39\.75\d*,-8\.78\d*\];/,
     );
-    expect(query).toContain('nwr["shop"]["name"](around:2000,39.74,-8.81);');
-    expect(query).toContain('nwr["office"]["name"](around:2000,39.74,-8.81);');
-    expect(query).toContain('nwr["craft"]["name"](around:2000,39.74,-8.81);');
+    expect(query).toContain('nwr["shop"]["name"];');
+    expect(query).toContain('nwr["office"]["name"];');
+    expect(query).toContain('nwr["craft"]["name"];');
+    expect(query).not.toContain('around');
     expect(query).toContain('out center tags;');
+  });
+
+  it('detects Overpass runtime errors returned with HTTP 200', () => {
+    expect(
+      hasRuntimeError({
+        elements: [],
+        remark: 'runtime error: Query timed out in "query" at line 9 after 68 seconds.',
+      }),
+    ).toBe(true);
+    expect(hasRuntimeError({ elements: [] })).toBe(false);
+  });
+
+  it('keeps only leads inside the radius', () => {
+    const at = (latitude: number, longitude: number) => ({ latitude, longitude }) as Lead;
+    expect(withinRadius(at(39.745, -8.81), leiria, 2)).toBe(true);
+    // Bbox corner (~2.8 km away) is outside a 2 km circle.
+    expect(withinRadius(at(39.758, -8.833), leiria, 2)).toBe(false);
   });
 
   it('maps tags to a lead', () => {

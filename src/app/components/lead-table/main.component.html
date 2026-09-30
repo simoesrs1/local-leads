@@ -1,0 +1,79 @@
+<section class="card results">
+  <div class="results__header">
+    <h2 class="results__title">{{ 'RESULTS.TITLE' | translate: { count: leads().length } }}</h2>
+    <button type="button" class="button" [disabled]="!leads().length" (click)="exportCsv()">
+      {{ 'RESULTS.EXPORT_CSV' | translate }}
+    </button>
+  </div>
+
+  @if (leads().length) {
+    <div class="results__scroll">
+      <table class="results__table">
+        <thead>
+          <tr>
+            <th>{{ 'RESULTS.NAME' | translate }}</th>
+            <th>{{ 'RESULTS.PHONE' | translate }}</th>
+            <th>{{ 'RESULTS.EMAIL' | translate }}</th>
+            <th>{{ 'RESULTS.WEBSITE' | translate }}</th>
+            <th>{{ 'RESULTS.ADDRESS' | translate }}</th>
+            <th>
+              <span class="visually-hidden">{{ 'RESULTS.MAP' | translate }}</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (lead of leads(); track lead.id) {
+            <tr>
+              <td>
+                <strong>{{ lead.name }}</strong>
+                <span class="results__type">{{ lead.type }}</span>
+              </td>
+              <td>
+                @for (phone of lead.phones; track phone) {
+                  <a class="results__phone" [href]="telHref(phone)">
+                    {{ phone }}
+                    <span class="badge">{{
+                      (isMobile(phone) ? 'RESULTS.MOBILE' : 'RESULTS.LANDLINE') | translate
+                    }}</span>
+                  </a>
+                } @empty {
+                  <span class="results__missing">{{ 'RESULTS.MISSING' | translate }}</span>
+                }
+              </td>
+              <td>
+                @if (lead.email) {
+                  <a [href]="'mailto:' + lead.email">{{ lead.email }}</a>
+                } @else {
+                  <span class="results__missing">{{ 'RESULTS.MISSING' | translate }}</span>
+                }
+              </td>
+              <td>
+                @if (lead.website) {
+                  <a [href]="websiteHref(lead.website)" target="_blank" rel="noopener noreferrer">{{
+                    lead.website
+                  }}</a>
+                } @else {
+                  <span class="results__missing">{{ 'RESULTS.MISSING' | translate }}</span>
+                }
+              </td>
+              <td>
+                @if (lead.address) {
+                  {{ lead.address }}
+                } @else {
+                  <span class="results__missing">{{ 'RESULTS.MISSING' | translate }}</span>
+                }
+              </td>
+              <td>
+                <a [href]="lead.mapsUrl" target="_blank" rel="noopener noreferrer">{{
+                  'RESULTS.OPEN_MAP' | translate
+                }}</a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <p class="results__empty">{{ 'RESULTS.NO_MATCHES' | translate }}</p>
+  }
+</section>

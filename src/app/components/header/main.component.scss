@@ -1,0 +1,38 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 0;
+
+  &__title {
+    margin: 0;
+    font-size: 1.6rem;
+    color: var(--color-primary);
+  }
+
+  &__subtitle {
+    margin: 0.25rem 0 0;
+    color: var(--color-muted);
+  }
+
+  &__languages {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  &__language {
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    border-radius: var(--radius);
+    padding: 0.35rem 0.6rem;
+    cursor: pointer;
+    font-weight: 600;
+
+    &--active {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #fff;
+    }
+  }
+}

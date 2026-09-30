@@ -1,0 +1,36 @@
+<app-search-bar
+  [loading]="store.loading()"
+  [sources]="store.availableSources"
+  (search)="onSearch($event)"
+/>
+
+@if (store.errorKey(); as errorKey) {
+  <p class="alert" role="alert">{{ errorKey | translate }}</p>
+}
+
+@if (store.loading()) {
+  <p class="finder__status" aria-live="polite">{{ 'SEARCH.LOADING' | translate }}</p>
+} @else if (store.criteria() && !store.errorKey()) {
+  @if (store.location(); as location) {
+    <p class="finder__status">
+      {{
+        'SEARCH.RESULTS_NEAR'
+          | translate: { location: location.displayName, radius: store.criteria()!.radiusKm }
+      }}
+    </p>
+  }
+
+  <app-lead-stats [stats]="store.stats()" (applyFilter)="onStatClick($event)" />
+
+  <div class="finder__layout">
+    <app-lead-filters
+      [filters]="store.filters()"
+      [types]="store.types()"
+      (filtersChange)="onFiltersChange($event)"
+      (reset)="store.resetFilters()"
+    />
+    <app-lead-table [leads]="store.filteredLeads()" [locality]="store.criteria()!.locality" />
+  </div>
+} @else if (!store.criteria()) {
+  <p class="finder__status">{{ 'SEARCH.HINT' | translate }}</p>
+}

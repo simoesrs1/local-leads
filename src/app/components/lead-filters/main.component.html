@@ -1,0 +1,89 @@
+<section class="card filters" [attr.aria-label]="'FILTERS.TITLE' | translate">
+  <div class="filters__header">
+    <h2 class="filters__title">{{ 'FILTERS.TITLE' | translate }}</h2>
+    <button type="button" class="link-button" (click)="reset.emit()">
+      {{ 'FILTERS.RESET' | translate }}
+    </button>
+  </div>
+
+  <label class="field">
+    <span class="field__label">{{ 'FILTERS.TEXT_LABEL' | translate }}</span>
+    <input
+      class="field__control"
+      type="search"
+      [placeholder]="'FILTERS.TEXT_PLACEHOLDER' | translate"
+      [ngModel]="filters().text"
+      (ngModelChange)="filtersChange.emit({ text: $event })"
+    />
+  </label>
+
+  <label class="field">
+    <span class="field__label">{{ 'FILTERS.TYPE_LABEL' | translate }}</span>
+    <select
+      class="field__control"
+      [ngModel]="filters().type"
+      (ngModelChange)="filtersChange.emit({ type: $event })"
+    >
+      <option value="">{{ 'FILTERS.ALL_TYPES' | translate }}</option>
+      @for (type of types(); track type) {
+        <option [value]="type">{{ type }}</option>
+      }
+    </select>
+  </label>
+
+  <label class="field">
+    <span class="field__label">{{ 'FILTERS.PHONE_LABEL' | translate }}</span>
+    <select
+      class="field__control"
+      [disabled]="filters().noContactData"
+      [ngModel]="filters().phone"
+      (ngModelChange)="filtersChange.emit({ phone: $event })"
+    >
+      @for (option of phoneOptions; track option) {
+        <option [value]="option">{{ 'FILTERS.PHONE_' + option.toUpperCase() | translate }}</option>
+      }
+    </select>
+  </label>
+
+  <label class="field">
+    <span class="field__label">{{ 'FILTERS.EMAIL_LABEL' | translate }}</span>
+    <select
+      class="field__control"
+      [disabled]="filters().noContactData"
+      [ngModel]="filters().email"
+      (ngModelChange)="filtersChange.emit({ email: $event })"
+    >
+      @for (option of presenceOptions; track option) {
+        <option [value]="option">{{ 'FILTERS.EMAIL_' + option.toUpperCase() | translate }}</option>
+      }
+    </select>
+  </label>
+
+  <label class="field">
+    <span class="field__label">{{ 'FILTERS.WEBSITE_LABEL' | translate }}</span>
+    <select
+      class="field__control"
+      [disabled]="filters().noContactData"
+      [ngModel]="filters().website"
+      (ngModelChange)="filtersChange.emit({ website: $event })"
+    >
+      @for (option of presenceOptions; track option) {
+        <option [value]="option">
+          {{ 'FILTERS.WEBSITE_' + option.toUpperCase() | translate }}
+        </option>
+      }
+    </select>
+  </label>
+
+  <label class="filters__checkbox">
+    <input
+      type="checkbox"
+      [ngModel]="filters().noContactData"
+      (ngModelChange)="filtersChange.emit({ noContactData: $event })"
+    />
+    <span>
+      <strong>{{ 'FILTERS.NO_CONTACT_DATA' | translate }}</strong>
+      <small>{{ 'FILTERS.NO_CONTACT_DATA_HINT' | translate }}</small>
+    </span>
+  </label>
+</section>

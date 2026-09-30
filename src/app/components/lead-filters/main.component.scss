@@ -1,0 +1,32 @@
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+
+  &__checkbox {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    cursor: pointer;
+
+    input {
+      margin-top: 0.2rem;
+    }
+
+    small {
+      display: block;
+      color: var(--color-muted);
+    }
+  }
+}

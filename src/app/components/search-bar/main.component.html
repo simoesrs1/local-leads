@@ -1,0 +1,76 @@
+<form class="card search" (ngSubmit)="submit()">
+  <div class="search__row">
+    <label class="field search__locality">
+      <span class="field__label">{{ 'SEARCH.LOCALITY_LABEL' | translate }}</span>
+      <input
+        class="field__control"
+        name="locality"
+        type="text"
+        autocomplete="off"
+        required
+        [placeholder]="'SEARCH.LOCALITY_PLACEHOLDER' | translate"
+        [ngModel]="locality()"
+        (ngModelChange)="locality.set($event)"
+      />
+    </label>
+
+    <label class="field">
+      <span class="field__label">{{ 'SEARCH.RADIUS_LABEL' | translate }}</span>
+      <select
+        class="field__control"
+        name="radius"
+        [ngModel]="radiusKm()"
+        (ngModelChange)="radiusKm.set(+$event)"
+      >
+        @for (radius of radiusOptions; track radius) {
+          <option [ngValue]="radius">{{ radius }} km</option>
+        }
+      </select>
+    </label>
+
+    <label class="field">
+      <span class="field__label">{{ 'SEARCH.SOURCE_LABEL' | translate }}</span>
+      <select
+        class="field__control"
+        name="source"
+        [ngModel]="source()"
+        (ngModelChange)="source.set($event)"
+      >
+        @for (item of sources(); track item) {
+          <option [ngValue]="item">{{ 'SOURCES.' + item.toUpperCase() | translate }}</option>
+        }
+      </select>
+    </label>
+
+    <button
+      class="button button--primary search__submit"
+      type="submit"
+      [disabled]="loading() || !locality().trim() || !categories().length"
+    >
+      {{ (loading() ? 'SEARCH.SEARCHING' : 'SEARCH.BUTTON') | translate }}
+    </button>
+  </div>
+
+  <fieldset class="search__categories">
+    <legend class="field__label">
+      {{ 'SEARCH.CATEGORIES_LABEL' | translate }}
+      <button type="button" class="link-button" (click)="toggleAllCategories()">
+        {{
+          (categories().length === allCategories.length ? 'SEARCH.CLEAR_ALL' : 'SEARCH.SELECT_ALL')
+            | translate
+        }}
+      </button>
+    </legend>
+    @for (category of allCategories; track category) {
+      <button
+        type="button"
+        class="chip"
+        [class.chip--active]="categories().includes(category)"
+        [attr.aria-pressed]="categories().includes(category)"
+        (click)="toggleCategory(category)"
+      >
+        {{ 'CATEGORIES.' + category.toUpperCase() | translate }}
+      </button>
+    }
+  </fieldset>
+</form>

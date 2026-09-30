@@ -1,0 +1,20 @@
+<header class="header">
+  <div>
+    <h1 class="header__title">{{ 'APP.TITLE' | translate }}</h1>
+    <p class="header__subtitle">{{ 'APP.SUBTITLE' | translate }}</p>
+  </div>
+
+  <div class="header__languages" role="group" [attr.aria-label]="'APP.LANGUAGE' | translate">
+    @for (language of languages; track language) {
+      <button
+        type="button"
+        class="header__language"
+        [class.header__language--active]="translation.language() === language"
+        [attr.aria-pressed]="translation.language() === language"
+        (click)="changeLanguage(language)"
+      >
+        {{ language.toUpperCase() }}
+      </button>
+    }
+  </div>
+</header>

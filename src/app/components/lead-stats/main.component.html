@@ -1,0 +1,22 @@
+<div class="stats">
+  <button type="button" class="stats__tile" (click)="applyFilter.emit(null)">
+    <span class="stats__value">{{ stats().total }}</span>
+    <span class="stats__label">{{ 'STATS.TOTAL' | translate }}</span>
+  </button>
+  <button type="button" class="stats__tile" (click)="applyFilter.emit({ phone: 'without' })">
+    <span class="stats__value">{{ stats().withoutPhone }}</span>
+    <span class="stats__label">{{ 'STATS.WITHOUT_PHONE' | translate }}</span>
+  </button>
+  <button type="button" class="stats__tile" (click)="applyFilter.emit({ email: 'without' })">
+    <span class="stats__value">{{ stats().withoutEmail }}</span>
+    <span class="stats__label">{{ 'STATS.WITHOUT_EMAIL' | translate }}</span>
+  </button>
+  <button type="button" class="stats__tile" (click)="applyFilter.emit({ website: 'without' })">
+    <span class="stats__value">{{ stats().withoutWebsite }}</span>
+    <span class="stats__label">{{ 'STATS.WITHOUT_WEBSITE' | translate }}</span>
+  </button>
+  <button type="button" class="stats__tile" (click)="applyFilter.emit({ noContactData: true })">
+    <span class="stats__value">{{ stats().withoutContactData }}</span>
+    <span class="stats__label">{{ 'STATS.WITHOUT_CONTACT_DATA' | translate }}</span>
+  </button>
+</div>

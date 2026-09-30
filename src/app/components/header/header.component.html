@@ -1,20 +1,35 @@
-<header class="header">
-  <div>
-    <h1 class="header__title">{{ 'APP.TITLE' | translate }}</h1>
-    <p class="header__subtitle">{{ 'APP.SUBTITLE' | translate }}</p>
-  </div>
+<header class="header" [class.header--dark]="layout.darkHeader()">
+  <div class="container header__inner">
+    <a class="header__brand" routerLink="/">
+      <span class="header__logo"><app-icon name="pin" [size]="18" [strokeWidth]="2.4" /></span>
+      <span>{{ 'APP.TITLE' | translate }}</span>
+    </a>
 
-  <div class="header__languages" role="group" [attr.aria-label]="'APP.LANGUAGE' | translate">
-    @for (language of languages; track language) {
-      <button
-        type="button"
-        class="header__language"
-        [class.header__language--active]="translation.language() === language"
-        [attr.aria-pressed]="translation.language() === language"
-        (click)="changeLanguage(language)"
+    <nav class="header__nav" [attr.aria-label]="'NAV.LABEL' | translate">
+      <a
+        class="header__link"
+        routerLink="/"
+        routerLinkActive="header__link--active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        >{{ 'NAV.HOME' | translate }}</a
       >
-        {{ language.toUpperCase() }}
-      </button>
-    }
+      <a class="header__link" routerLink="/search" routerLinkActive="header__link--active">
+        {{ 'NAV.SEARCH' | translate }}
+      </a>
+    </nav>
+
+    <div class="header__languages" role="group" [attr.aria-label]="'APP.LANGUAGE' | translate">
+      @for (language of languages; track language) {
+        <button
+          type="button"
+          class="header__language"
+          [class.header__language--active]="translation.language() === language"
+          [attr.aria-pressed]="translation.language() === language"
+          (click)="changeLanguage(language)"
+        >
+          {{ language.toUpperCase() }}
+        </button>
+      }
+    </div>
   </div>
 </header>

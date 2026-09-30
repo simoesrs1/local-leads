@@ -37,6 +37,18 @@ describe('translations', () => {
         ['ANY', 'WITH', 'WITHOUT'].map((option) => `FILTERS.${field}_${option}`),
       ),
     ];
-    expect(dynamic.filter((key) => !(key in en))).toEqual([]);
+    // Home page sections built from `<key> + '_TITLE' | '_TEXT'`.
+    const homeSections = [
+      'HOME.STEP_1',
+      'HOME.STEP_2',
+      'HOME.STEP_3',
+      'HOME.FEATURE_SOURCES',
+      'HOME.FEATURE_FILTERS',
+      'HOME.FEATURE_MOBILE',
+      'HOME.FEATURE_EXPORT',
+      'HOME.FEATURE_I18N',
+      'HOME.FEATURE_EMAIL',
+    ].flatMap((key) => [`${key}_TITLE`, `${key}_TEXT`]);
+    expect([...dynamic, ...homeSections].filter((key) => !(key in en))).toEqual([]);
   });
 });

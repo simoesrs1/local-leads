@@ -1,36 +1,58 @@
-<app-search-bar
-  [loading]="store.loading()"
-  [sources]="store.availableSources"
-  (search)="onSearch($event)"
-/>
+<div class="container finder">
+  <header class="finder__intro">
+    <span class="eyebrow"
+      ><app-icon name="search" [size]="14" /> {{ 'SEARCH.EYEBROW' | translate }}</span
+    >
+    <h1>{{ 'SEARCH.PAGE_TITLE' | translate }}</h1>
+    <p>{{ 'SEARCH.PAGE_SUBTITLE' | translate }}</p>
+  </header>
 
-@if (store.errorKey(); as errorKey) {
-  <p class="alert" role="alert">{{ errorKey | translate }}</p>
-}
+  <app-search-bar
+    [loading]="store.loading()"
+    [sources]="store.availableSources"
+    (search)="onSearch($event)"
+  />
 
-@if (store.loading()) {
-  <app-loader class="card" size="large" message="SEARCH.LOADING" />
-} @else if (store.criteria() && !store.errorKey()) {
-  @if (store.location(); as location) {
-    <p class="finder__status">
-      {{
-        'SEARCH.RESULTS_NEAR'
-          | translate: { location: location.displayName, radius: store.criteria()!.radiusKm }
-      }}
-    </p>
+  @if (store.errorKey(); as errorKey) {
+    <div class="alert" role="alert">
+      <app-icon name="alert" [size]="20" />
+      <span>{{ errorKey | translate }}</span>
+    </div>
   }
 
-  <app-lead-stats [stats]="store.stats()" (applyFilter)="onStatClick($event)" />
+  @if (store.loading()) {
+    <app-loader class="card" size="large" message="SEARCH.LOADING" />
+  } @else if (store.criteria() && !store.errorKey()) {
+    @if (store.location(); as location) {
+      <p class="finder__location">
+        <app-icon name="pin" [size]="16" />
+        {{
+          'SEARCH.RESULTS_NEAR'
+            | translate: { location: location.displayName, radius: store.criteria()!.radiusKm }
+        }}
+      </p>
+    }
 
-  <div class="finder__layout">
-    <app-lead-filters
+    <app-lead-stats
+      [stats]="store.stats()"
       [filters]="store.filters()"
-      [types]="store.types()"
-      (filtersChange)="onFiltersChange($event)"
-      (reset)="store.resetFilters()"
+      (applyFilter)="onStatClick($event)"
     />
-    <app-lead-table [leads]="store.filteredLeads()" [locality]="store.criteria()!.locality" />
-  </div>
-} @else if (!store.criteria()) {
-  <p class="finder__status">{{ 'SEARCH.HINT' | translate }}</p>
-}
+
+    <div class="finder__layout">
+      <app-lead-filters
+        [filters]="store.filters()"
+        [types]="store.types()"
+        (filtersChange)="onFiltersChange($event)"
+        (reset)="store.resetFilters()"
+      />
+      <app-lead-table [leads]="store.filteredLeads()" [locality]="store.criteria()!.locality" />
+    </div>
+  } @else if (!store.criteria()) {
+    <div class="empty card">
+      <span class="empty__icon"><app-icon name="globe" [size]="28" /></span>
+      <h2>{{ 'SEARCH.EMPTY_TITLE' | translate }}</h2>
+      <p>{{ 'SEARCH.HINT' | translate }}</p>
+    </div>
+  }
+</div>

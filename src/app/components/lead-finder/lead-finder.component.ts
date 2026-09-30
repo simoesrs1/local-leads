@@ -3,6 +3,7 @@ import { LeadFilters } from '../../models/filter.model';
 import { SearchCriteria } from '../../models/search.model';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { LeadSearchService } from '../../services/lead-search.service';
+import { IconComponent } from '../icon/icon.component';
 import { LeadFiltersComponent } from '../lead-filters/lead-filters.component';
 import { LeadStatsComponent } from '../lead-stats/lead-stats.component';
 import { LeadTableComponent } from '../lead-table/lead-table.component';
@@ -18,6 +19,7 @@ import { SearchBarComponent } from '../search-bar/search-bar.component';
     LeadStatsComponent,
     LeadTableComponent,
     LoaderComponent,
+    IconComponent,
     TranslatePipe,
   ],
   templateUrl: './lead-finder.component.html',

@@ -1,15 +1,17 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { FooterComponent } from './components/footer/footer.component';
 import { HeaderComponent } from './components/header/header.component';
-import { LeadFinderComponent } from './components/lead-finder/lead-finder.component';
 
 @Component({
   selector: 'app-root',
-  imports: [HeaderComponent, LeadFinderComponent],
+  imports: [HeaderComponent, FooterComponent, RouterOutlet],
   template: `
-    <main class="container">
-      <app-header />
-      <app-lead-finder />
+    <app-header />
+    <main>
+      <router-outlet />
     </main>
+    <app-footer />
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -1,0 +1,153 @@
+<!-- Scroll-driven story: the stage is sticky while the tall section scrolls underneath. -->
+<section class="story" #story>
+  <div class="story__stage">
+    <div class="story__stars story__stars--far"></div>
+    <div class="story__stars story__stars--near"></div>
+
+    <app-globe [progress]="progress()" [target]="target" />
+
+    <!-- Stage A: hero -->
+    <div class="story__layer story__hero" [class.is-active]="stage() === 'hero'">
+      <div class="container">
+        <span class="story__eyebrow">
+          <app-icon name="sparkles" [size]="14" /> {{ 'HOME.EYEBROW' | translate }}
+        </span>
+        <h1 class="story__title">
+          {{ 'HOME.TITLE_1' | translate }}
+          <span class="story__highlight">{{ 'HOME.TITLE_2' | translate }}</span>
+        </h1>
+        <p class="story__lead">{{ 'HOME.LEAD' | translate }}</p>
+        <div class="story__actions">
+          <a class="button button--primary button--large" routerLink="/search">
+            {{ 'HOME.CTA_START' | translate }} <app-icon name="arrowRight" [size]="18" />
+          </a>
+          <a
+            class="button button--large story__glass-button"
+            routerLink="/"
+            fragment="how-it-works"
+          >
+            {{ 'HOME.CTA_HOW' | translate }}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stage B: zooming into the locality -->
+    <div class="story__location"><app-icon name="pin" [size]="16" /> Leiria, Portugal</div>
+    <div
+      class="story__layer story__caption story__caption--zoom"
+      [class.is-active]="stage() === 'zoom'"
+    >
+      <span class="story__step">01</span>
+      <h2>{{ 'HOME.ZOOM_TITLE' | translate }}</h2>
+      <p>{{ 'HOME.ZOOM_TEXT' | translate }}</p>
+    </div>
+
+    <!-- Stage C: leads appear on the map -->
+    <div
+      class="story__layer story__caption story__caption--leads"
+      [class.is-active]="stage() === 'leads'"
+    >
+      <span class="story__step">02</span>
+      <h2>{{ 'HOME.LEADS_TITLE' | translate }}</h2>
+      <p>{{ 'HOME.LEADS_TEXT' | translate }}</p>
+      <ul class="story__legend">
+        <li><span class="dot dot--ok"></span>{{ 'HOME.LEGEND_OK' | translate }}</li>
+        <li><span class="dot dot--partial"></span>{{ 'HOME.LEGEND_PARTIAL' | translate }}</li>
+        <li><span class="dot dot--missing"></span>{{ 'HOME.LEGEND_MISSING' | translate }}</li>
+      </ul>
+      <a class="button button--primary" routerLink="/search">
+        {{ 'HOME.CTA_START' | translate }} <app-icon name="arrowRight" [size]="18" />
+      </a>
+    </div>
+
+    <!-- Floating example leads, each with its own parallax speed -->
+    <div class="lead-card lead-card--1">
+      <span class="lead-card__avatar">PC</span>
+      <div>
+        <strong>Padaria Central</strong>
+        <div class="lead-card__tags">
+          <span class="pill pill--success"><app-icon name="phone" [size]="12" /> 244 123 456</span>
+          <span class="pill pill--danger">{{ 'HOME.NO_WEBSITE' | translate }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="lead-card lead-card--2">
+      <span class="lead-card__avatar">OS</span>
+      <div>
+        <strong>Oficina Silva</strong>
+        <div class="lead-card__tags">
+          <span class="pill pill--danger">{{ 'HOME.NO_DATA' | translate }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="lead-card lead-card--3">
+      <span class="lead-card__avatar">CR</span>
+      <div>
+        <strong>Cabeleireiro Rosa</strong>
+        <div class="lead-card__tags">
+          <span class="pill pill--success"
+            ><app-icon name="mail" [size]="12" /> rosa&#64;mail.pt</span
+          >
+          <span class="pill pill--warning">{{ 'HOME.NO_MOBILE' | translate }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="story__scroll-hint">
+      <span class="story__mouse"><span></span></span>
+      {{ 'HOME.SCROLL' | translate }}
+    </div>
+    <div class="story__progress"><span></span></div>
+  </div>
+</section>
+
+<section id="how-it-works" class="section container">
+  <header class="section__header reveal">
+    <span class="eyebrow">{{ 'HOME.HOW_EYEBROW' | translate }}</span>
+    <h2>{{ 'HOME.HOW_TITLE' | translate }}</h2>
+  </header>
+  <ol class="steps">
+    @for (step of steps; track step.key; let index = $index) {
+      <li class="step reveal">
+        <span class="step__icon"><app-icon [name]="step.icon" [size]="22" /></span>
+        <span class="step__number">0{{ index + 1 }}</span>
+        <h3>{{ step.key + '_TITLE' | translate }}</h3>
+        <p>{{ step.key + '_TEXT' | translate }}</p>
+      </li>
+    }
+  </ol>
+</section>
+
+<section class="section container">
+  <header class="section__header reveal">
+    <span class="eyebrow">{{ 'HOME.FEATURES_EYEBROW' | translate }}</span>
+    <h2>{{ 'HOME.FEATURES_TITLE' | translate }}</h2>
+  </header>
+  <div class="features">
+    @for (feature of features; track feature.key) {
+      <article class="feature reveal">
+        <span class="feature__icon"><app-icon [name]="feature.icon" [size]="20" /></span>
+        <h3>
+          {{ feature.key + '_TITLE' | translate }}
+          @if (feature.soon) {
+            <span class="pill pill--primary">{{ 'HOME.SOON' | translate }}</span>
+          }
+        </h3>
+        <p>{{ feature.key + '_TEXT' | translate }}</p>
+      </article>
+    }
+  </div>
+</section>
+
+<section class="container">
+  <div class="cta reveal">
+    <div>
+      <h2>{{ 'HOME.CTA_TITLE' | translate }}</h2>
+      <p>{{ 'HOME.CTA_TEXT' | translate }}</p>
+    </div>
+    <a class="button button--large cta__button" routerLink="/search">
+      <app-icon name="search" [size]="18" /> {{ 'HOME.CTA_START' | translate }}
+    </a>
+  </div>
+</section>

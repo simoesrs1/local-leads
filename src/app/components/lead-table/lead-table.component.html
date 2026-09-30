@@ -1,8 +1,11 @@
 <section class="card results">
   <div class="results__header">
-    <h2 class="results__title">{{ 'RESULTS.TITLE' | translate: { count: leads().length } }}</h2>
+    <h2 class="results__title">
+      {{ 'RESULTS.TITLE' | translate }}
+      <span class="pill pill--primary">{{ leads().length }}</span>
+    </h2>
     <button type="button" class="button" [disabled]="!leads().length" (click)="exportCsv()">
-      {{ 'RESULTS.EXPORT_CSV' | translate }}
+      <app-icon name="download" [size]="16" /> {{ 'RESULTS.EXPORT_CSV' | translate }}
     </button>
   </div>
 
@@ -25,48 +28,66 @@
           @for (lead of leads(); track lead.id) {
             <tr>
               <td>
-                <strong>{{ lead.name }}</strong>
-                <span class="results__type">{{ lead.type }}</span>
+                <div class="results__business">
+                  <span class="results__avatar" [style.--hue]="avatarHue(lead.name)">
+                    {{ initials(lead.name) }}
+                  </span>
+                  <div>
+                    <strong>{{ lead.name }}</strong>
+                    <span class="results__type">{{ lead.type }}</span>
+                  </div>
+                </div>
               </td>
               <td>
                 @for (phone of lead.phones; track phone) {
-                  <a class="results__phone" [href]="telHref(phone)">
+                  <a class="results__contact" [href]="telHref(phone)">
                     {{ phone }}
-                    <span class="badge">{{
-                      (isMobile(phone) ? 'RESULTS.MOBILE' : 'RESULTS.LANDLINE') | translate
-                    }}</span>
+                    <span
+                      class="pill"
+                      [class.pill--success]="isMobile(phone)"
+                      [class.pill--primary]="!isMobile(phone)"
+                    >
+                      {{ (isMobile(phone) ? 'RESULTS.MOBILE' : 'RESULTS.LANDLINE') | translate }}
+                    </span>
                   </a>
                 } @empty {
-                  <span class="results__missing">{{ 'RESULTS.MISSING' | translate }}</span>
+                  <span class="pill pill--danger">{{ 'RESULTS.NO_PHONE' | translate }}</span>
                 }
               </td>
               <td>
                 @if (lead.email) {
-                  <a [href]="'mailto:' + lead.email">{{ lead.email }}</a>
+                  <a class="results__contact" [href]="'mailto:' + lead.email">{{ lead.email }}</a>
                 } @else {
-                  <span class="results__missing">{{ 'RESULTS.MISSING' | translate }}</span>
+                  <span class="pill pill--danger">{{ 'RESULTS.NO_EMAIL' | translate }}</span>
                 }
               </td>
               <td>
                 @if (lead.website) {
-                  <a [href]="websiteHref(lead.website)" target="_blank" rel="noopener noreferrer">{{
-                    lead.website
-                  }}</a>
+                  <a
+                    class="results__contact"
+                    [href]="websiteHref(lead.website)"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >{{ hostname(lead.website) }}</a
+                  >
                 } @else {
-                  <span class="results__missing">{{ 'RESULTS.MISSING' | translate }}</span>
+                  <span class="pill pill--danger">{{ 'RESULTS.NO_WEBSITE' | translate }}</span>
                 }
               </td>
-              <td>
-                @if (lead.address) {
-                  {{ lead.address }}
-                } @else {
-                  <span class="results__missing">{{ 'RESULTS.MISSING' | translate }}</span>
-                }
+              <td class="results__address">
+                {{ lead.address ?? ('RESULTS.MISSING' | translate) }}
               </td>
               <td>
-                <a [href]="lead.mapsUrl" target="_blank" rel="noopener noreferrer">{{
-                  'RESULTS.OPEN_MAP' | translate
-                }}</a>
+                <a
+                  class="results__map"
+                  [href]="lead.mapsUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  [attr.aria-label]="('RESULTS.OPEN_MAP' | translate) + ': ' + lead.name"
+                  [title]="'RESULTS.OPEN_MAP' | translate"
+                >
+                  <app-icon name="external" [size]="16" />
+                </a>
               </td>
             </tr>
           }
@@ -74,6 +95,9 @@
       </table>
     </div>
   } @else {
-    <p class="results__empty">{{ 'RESULTS.NO_MATCHES' | translate }}</p>
+    <div class="results__empty">
+      <app-icon name="filter" [size]="22" />
+      <p>{{ 'RESULTS.NO_MATCHES' | translate }}</p>
+    </div>
   }
 </section>

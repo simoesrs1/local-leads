@@ -1,7 +1,13 @@
 <section class="card filters" [attr.aria-label]="'FILTERS.TITLE' | translate">
   <div class="filters__header">
-    <h2 class="filters__title">{{ 'FILTERS.TITLE' | translate }}</h2>
-    <button type="button" class="link-button" (click)="reset.emit()">
+    <h2 class="filters__title">
+      <app-icon name="filter" [size]="18" />
+      {{ 'FILTERS.TITLE' | translate }}
+      @if (activeCount()) {
+        <span class="pill pill--primary">{{ activeCount() }}</span>
+      }
+    </h2>
+    <button type="button" class="link-button" [disabled]="!activeCount()" (click)="reset.emit()">
       {{ 'FILTERS.RESET' | translate }}
     </button>
   </div>

@@ -18,6 +18,8 @@ email sending and templates are planned for a later phase.**
 
 ## Features
 
+- Landing page with a scroll-driven parallax story: a 3D globe (d3-geo + world-atlas) spins to Portugal,
+  zooms into Leiria and turns into a city map where leads drop in as pins.
 - Search by locality with a configurable radius (1–20 km) and business categories.
 - Two data sources:
   - **OpenStreetMap** (default, free, no API key) — geocoding via Nominatim, businesses via Overpass.
@@ -45,6 +47,7 @@ by HTTP referrer in the Google Cloud Console. Do not commit real keys.
 
 ```
 src/app/
+  app.routes.ts  # "/" landing page, "/search" lead finder (both lazy-loaded)
   components/<name>/<name>.component.{ts,html,scss}   # one folder per component
   models/        # Lead, search criteria, filters
   services/      # search state, geocoding, translations

@@ -2,16 +2,19 @@
   <div class="search__row">
     <label class="field search__locality">
       <span class="field__label">{{ 'SEARCH.LOCALITY_LABEL' | translate }}</span>
-      <input
-        class="field__control"
-        name="locality"
-        type="text"
-        autocomplete="off"
-        required
-        [placeholder]="'SEARCH.LOCALITY_PLACEHOLDER' | translate"
-        [ngModel]="locality()"
-        (ngModelChange)="locality.set($event)"
-      />
+      <span class="search__input">
+        <app-icon name="pin" [size]="18" />
+        <input
+          class="field__control"
+          name="locality"
+          type="text"
+          autocomplete="off"
+          required
+          [placeholder]="'SEARCH.LOCALITY_PLACEHOLDER' | translate"
+          [ngModel]="locality()"
+          (ngModelChange)="locality.set($event)"
+        />
+      </span>
     </label>
 
     <label class="field">
@@ -43,21 +46,21 @@
     </label>
 
     <button
-      class="button button--primary search__submit"
+      class="button button--primary button--large search__submit"
       type="submit"
       [disabled]="loading() || !locality().trim() || !categories().length"
     >
       @if (loading()) {
         <app-loader size="small" message="SEARCH.SEARCHING" />
       } @else {
-        {{ 'SEARCH.BUTTON' | translate }}
+        <app-icon name="search" [size]="18" /> {{ 'SEARCH.BUTTON' | translate }}
       }
     </button>
   </div>
 
   <fieldset class="search__categories">
-    <legend class="field__label">
-      {{ 'SEARCH.CATEGORIES_LABEL' | translate }}
+    <legend class="search__legend">
+      <span class="field__label">{{ 'SEARCH.CATEGORIES_LABEL' | translate }}</span>
       <button type="button" class="link-button" (click)="toggleAllCategories()">
         {{
           (categories().length === allCategories.length ? 'SEARCH.CLEAR_ALL' : 'SEARCH.SELECT_ALL')
@@ -73,6 +76,9 @@
         [attr.aria-pressed]="categories().includes(category)"
         (click)="toggleCategory(category)"
       >
+        @if (categories().includes(category)) {
+          <app-icon name="check" [size]="14" [strokeWidth]="2.6" />
+        }
         {{ 'CATEGORIES.' + category.toUpperCase() | translate }}
       </button>
     }

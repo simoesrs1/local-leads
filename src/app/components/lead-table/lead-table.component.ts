@@ -7,8 +7,8 @@ import { downloadCsv, leadsToCsv } from '../../utils/csv.utils';
 @Component({
   selector: 'app-lead-table',
   imports: [TranslatePipe],
-  templateUrl: './main.component.html',
-  styleUrl: './main.component.scss',
+  templateUrl: './lead-table.component.html',
+  styleUrl: './lead-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LeadTableComponent {

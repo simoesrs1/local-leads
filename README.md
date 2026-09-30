@@ -44,7 +44,7 @@ by HTTP referrer in the Google Cloud Console. Do not commit real keys.
 
 ```
 src/app/
-  components/<name>/main.component.{ts,html,scss}   # one folder per component
+  components/<name>/<name>.component.{ts,html,scss}   # one folder per component
   models/        # Lead, search criteria, filters
   services/      # search state, geocoding, translations
     providers/   # data sources (OpenStreetMap, Google Places) behind a common interface

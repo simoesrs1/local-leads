@@ -6,8 +6,8 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
 @Component({
   selector: 'app-lead-filters',
   imports: [FormsModule, TranslatePipe],
-  templateUrl: './main.component.html',
-  styleUrl: './main.component.scss',
+  templateUrl: './lead-filters.component.html',
+  styleUrl: './lead-filters.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LeadFiltersComponent {

@@ -3,10 +3,10 @@ import { LeadFilters } from '../../models/filter.model';
 import { SearchCriteria } from '../../models/search.model';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { LeadSearchService } from '../../services/lead-search.service';
-import { LeadFiltersComponent } from '../lead-filters/main.component';
-import { LeadStatsComponent } from '../lead-stats/main.component';
-import { LeadTableComponent } from '../lead-table/main.component';
-import { SearchBarComponent } from '../search-bar/main.component';
+import { LeadFiltersComponent } from '../lead-filters/lead-filters.component';
+import { LeadStatsComponent } from '../lead-stats/lead-stats.component';
+import { LeadTableComponent } from '../lead-table/lead-table.component';
+import { SearchBarComponent } from '../search-bar/search-bar.component';
 
 /** Page container: wires the presentational components to LeadSearchService. */
 @Component({
@@ -18,8 +18,8 @@ import { SearchBarComponent } from '../search-bar/main.component';
     LeadTableComponent,
     TranslatePipe,
   ],
-  templateUrl: './main.component.html',
-  styleUrl: './main.component.scss',
+  templateUrl: './lead-finder.component.html',
+  styleUrl: './lead-finder.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LeadFinderComponent {

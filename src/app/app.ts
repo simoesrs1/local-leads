@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { HeaderComponent } from './components/header/main.component';
-import { LeadFinderComponent } from './components/lead-finder/main.component';
+import { HeaderComponent } from './components/header/header.component';
+import { LeadFinderComponent } from './components/lead-finder/lead-finder.component';
 
 @Component({
   selector: 'app-root',

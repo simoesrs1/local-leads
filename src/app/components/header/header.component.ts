@@ -5,8 +5,8 @@ import { LANGUAGES, Language, TranslationService } from '../../services/translat
 @Component({
   selector: 'app-header',
   imports: [TranslatePipe],
-  templateUrl: './main.component.html',
-  styleUrl: './main.component.scss',
+  templateUrl: './header.component.html',
+  styleUrl: './header.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HeaderComponent {

@@ -7,8 +7,8 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
 @Component({
   selector: 'app-search-bar',
   imports: [FormsModule, TranslatePipe],
-  templateUrl: './main.component.html',
-  styleUrl: './main.component.scss',
+  templateUrl: './search-bar.component.html',
+  styleUrl: './search-bar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SearchBarComponent {

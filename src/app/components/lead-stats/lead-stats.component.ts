@@ -7,8 +7,8 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
 @Component({
   selector: 'app-lead-stats',
   imports: [TranslatePipe],
-  templateUrl: './main.component.html',
-  styleUrl: './main.component.scss',
+  templateUrl: './lead-stats.component.html',
+  styleUrl: './lead-stats.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LeadStatsComponent {

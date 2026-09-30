@@ -26,6 +26,7 @@ email sending and templates are planned for a later phase.**
   "without any contact data".
 - Summary tiles that double as filter shortcuts.
 - CSV export of the filtered leads.
+- Reusable `<app-loader>` spinner (inline, block or overlay) for any list that loads data.
 - English and Portuguese UI (`public/i18n/en.json`, `public/i18n/pt.json`).
 
 ## Getting started

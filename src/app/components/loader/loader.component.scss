@@ -1,0 +1,72 @@
+:host {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  --loader-size: 1.75rem;
+  --loader-thickness: 3px;
+}
+
+:host(.loader--small) {
+  flex-direction: row;
+  gap: 0.5rem;
+  --loader-size: 1rem;
+  --loader-thickness: 2px;
+}
+
+:host(.loader--large) {
+  display: flex;
+  padding: 2.5rem 1rem;
+  --loader-size: 3rem;
+  --loader-thickness: 4px;
+}
+
+:host(.loader--overlay) {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--color-surface) 75%, transparent);
+}
+
+.loader__spinner {
+  width: var(--loader-size);
+  height: var(--loader-size);
+  border: var(--loader-thickness) solid currentColor;
+  // Only one quarter keeps full colour; the rest is faded to draw the "wheel".
+  border-color: color-mix(in srgb, currentColor 20%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: loader-spin 0.8s linear infinite;
+}
+
+:host(.loader--medium) .loader__spinner,
+:host(.loader--large) .loader__spinner,
+:host(.loader--overlay) .loader__spinner {
+  color: var(--color-primary);
+}
+
+.loader__message {
+  color: var(--color-muted);
+  text-align: center;
+}
+
+// Inline (e.g. inside a button): message follows the surrounding text colour.
+:host(.loader--small) .loader__message {
+  color: inherit;
+}
+
+@keyframes loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Slow down instead of removing, so the state is still visible.
+@media (prefers-reduced-motion: reduce) {
+  .loader__spinner {
+    animation-duration: 2.4s;
+  }
+}

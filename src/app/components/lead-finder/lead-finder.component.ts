@@ -6,6 +6,7 @@ import { LeadSearchService } from '../../services/lead-search.service';
 import { LeadFiltersComponent } from '../lead-filters/lead-filters.component';
 import { LeadStatsComponent } from '../lead-stats/lead-stats.component';
 import { LeadTableComponent } from '../lead-table/lead-table.component';
+import { LoaderComponent } from '../loader/loader.component';
 import { SearchBarComponent } from '../search-bar/search-bar.component';
 
 /** Page container: wires the presentational components to LeadSearchService. */
@@ -16,6 +17,7 @@ import { SearchBarComponent } from '../search-bar/search-bar.component';
     LeadFiltersComponent,
     LeadStatsComponent,
     LeadTableComponent,
+    LoaderComponent,
     TranslatePipe,
   ],
   templateUrl: './lead-finder.component.html',

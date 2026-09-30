@@ -3,10 +3,11 @@ import { FormsModule } from '@angular/forms';
 import { LeadSource } from '../../models/lead.model';
 import { BUSINESS_CATEGORIES, BusinessCategory, SearchCriteria } from '../../models/search.model';
 import { TranslatePipe } from '../../pipes/translate.pipe';
+import { LoaderComponent } from '../loader/loader.component';
 
 @Component({
   selector: 'app-search-bar',
-  imports: [FormsModule, TranslatePipe],
+  imports: [FormsModule, LoaderComponent, TranslatePipe],
   templateUrl: './search-bar.component.html',
   styleUrl: './search-bar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

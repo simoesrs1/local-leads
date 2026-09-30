@@ -1,6 +1,8 @@
 {
   "APP.TITLE": "Local Leads",
   "APP.SUBTITLE": "Encontra negócios locais por localidade e identifica os que não têm dados de contacto.",
+  "COMMON.LOADING": "A carregar…",
+
   "APP.LANGUAGE": "Idioma",
 
   "SEARCH.LOCALITY_LABEL": "Localidade",

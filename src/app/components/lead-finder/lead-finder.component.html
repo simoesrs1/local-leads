@@ -9,7 +9,7 @@
 }
 
 @if (store.loading()) {
-  <p class="finder__status" aria-live="polite">{{ 'SEARCH.LOADING' | translate }}</p>
+  <app-loader class="card" size="large" message="SEARCH.LOADING" />
 } @else if (store.criteria() && !store.errorKey()) {
   @if (store.location(); as location) {
     <p class="finder__status">

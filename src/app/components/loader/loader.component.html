@@ -1,0 +1,7 @@
+<span class="loader__spinner" aria-hidden="true"></span>
+@if (message()) {
+  <span class="loader__message">{{ message() | translate }}</span>
+} @else {
+  <!-- Without a visible message, still announce the state to screen readers. -->
+  <span class="visually-hidden">{{ 'COMMON.LOADING' | translate }}</span>
+}

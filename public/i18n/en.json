@@ -1,6 +1,8 @@
 {
   "APP.TITLE": "Local Leads",
   "APP.SUBTITLE": "Find local businesses by locality and spot the ones missing contact data.",
+  "COMMON.LOADING": "Loading…",
+
   "APP.LANGUAGE": "Language",
 
   "SEARCH.LOCALITY_LABEL": "Locality",

@@ -47,7 +47,11 @@
       type="submit"
       [disabled]="loading() || !locality().trim() || !categories().length"
     >
-      {{ (loading() ? 'SEARCH.SEARCHING' : 'SEARCH.BUTTON') | translate }}
+      @if (loading()) {
+        <app-loader size="small" message="SEARCH.SEARCHING" />
+      } @else {
+        {{ 'SEARCH.BUTTON' | translate }}
+      }
     </button>
   </div>
 

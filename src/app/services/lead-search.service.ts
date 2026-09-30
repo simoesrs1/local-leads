@@ -85,6 +85,8 @@ export class LeadSearchService {
           this._loading.set(false);
         },
         error: (error: unknown) => {
+          // Keep the underlying cause visible in DevTools for troubleshooting.
+          console.error('[LeadSearch]', error);
           this._errorKey.set(
             error instanceof LeadSearchError ? error.translationKey : 'ERRORS.GENERIC',
           );

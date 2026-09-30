@@ -73,6 +73,7 @@
   "ERRORS.LOCALITY_NOT_FOUND": "Locality not found. Try a different name (e.g. \"Leiria, Portugal\").",
   "ERRORS.GEOCODING_FAILED": "Could not locate the locality. Check your connection and try again.",
   "ERRORS.PROVIDER_BUSY": "The data source is busy right now. Please try again in a minute.",
+  "ERRORS.PROVIDER_TIMEOUT": "The search took too long. Try a smaller radius or fewer categories.",
   "ERRORS.PROVIDER_FAILED": "The data source returned an error. Try a smaller radius or fewer categories.",
   "ERRORS.GOOGLE_KEY_MISSING": "Google Places needs an API key in src/environments/environment.ts.",
   "ERRORS.GENERIC": "Something went wrong. Please try again."

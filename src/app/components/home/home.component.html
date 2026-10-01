@@ -4,7 +4,7 @@
     <div class="story__stars story__stars--far"></div>
     <div class="story__stars story__stars--near"></div>
 
-    <app-globe [progress]="progress()" [target]="target" />
+    <app-globe [progress]="progress()" [target]="target()" />
 
     <!-- Stage A: hero -->
     <div class="story__layer story__hero" [class.is-active]="stage() === 'hero'">
@@ -33,14 +33,22 @@
     </div>
 
     <!-- Stage B: zooming into the locality -->
-    <div class="story__location"><app-icon name="pin" [size]="16" /> Leiria, Portugal</div>
+    <div class="story__location">
+      <app-icon name="pin" [size]="16" /> {{ placeName() ?? ('HOME.YOUR_LOCATION' | translate) }}
+    </div>
     <div
       class="story__layer story__caption story__caption--zoom"
       [class.is-active]="stage() === 'zoom'"
     >
       <span class="story__step">01</span>
       <h2>{{ 'HOME.ZOOM_TITLE' | translate }}</h2>
-      <p>{{ 'HOME.ZOOM_TEXT' | translate }}</p>
+      <p>
+        @if (placeName(); as place) {
+          {{ 'HOME.ZOOM_TEXT' | translate: { place: place.split(',')[0] } }}
+        } @else {
+          {{ 'HOME.ZOOM_TEXT_NEARBY' | translate }}
+        }
+      </p>
     </div>
 
     <!-- Stage C: leads appear on the map -->

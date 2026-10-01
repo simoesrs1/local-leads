@@ -19,7 +19,8 @@ email sending and templates are planned for a later phase.**
 ## Features
 
 - Landing page with a scroll-driven parallax story: a 3D globe (d3-geo + world-atlas) spins to Portugal,
-  zooms into Leiria and turns into a city map where leads drop in as pins.
+  zooms into the visitor's location (browser geolocation, if allowed; Leiria otherwise) and turns into a
+  city map where leads drop in as pins.
 - Search by locality with a configurable radius (1–20 km) and business categories.
 - Two data sources:
   - **OpenStreetMap** (default, free, no API key) — geocoding via Nominatim, businesses via Overpass.

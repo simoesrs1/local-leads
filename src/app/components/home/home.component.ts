@@ -10,8 +10,12 @@ import {
   viewChild,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { TranslatePipe } from '../../pipes/translate.pipe';
+import { GeocodingService } from '../../services/geocoding.service';
+import { GeolocationService } from '../../services/geolocation.service';
 import { LayoutService } from '../../services/layout.service';
+import { TranslationService } from '../../services/translation.service';
 import { GlobeComponent, GlobeTarget } from '../globe/globe.component';
 import { IconComponent, IconName } from '../icon/icon.component';
 
@@ -38,6 +42,9 @@ export class HomeComponent {
   private readonly story = viewChild.required<ElementRef<HTMLElement>>('story');
   private readonly destroyRef = inject(DestroyRef);
   private readonly layout = inject(LayoutService);
+  private readonly geolocation = inject(GeolocationService);
+  private readonly geocoding = inject(GeocodingService);
+  private readonly translation = inject(TranslationService);
 
   protected readonly progress = signal(0);
   /** Which text layer is interactive; hidden layers must not catch clicks. */
@@ -48,11 +55,14 @@ export class HomeComponent {
     return 'leads';
   });
 
-  protected readonly target: GlobeTarget = {
+  /** Where the globe zooms to: Leiria by default, the user's position if they allow it. */
+  protected readonly target = signal<GlobeTarget>({
     latitude: 39.7436,
     longitude: -8.8071,
     countryId: '620', // Portugal
-  };
+  });
+  /** Label shown next to the target while zooming; null = "your location" (name still loading). */
+  protected readonly placeName = signal<string | null>('Leiria, Portugal');
 
   protected readonly steps: { icon: IconName; key: string }[] = [
     { icon: 'pin', key: 'HOME.STEP_1' },
@@ -70,7 +80,23 @@ export class HomeComponent {
   ];
 
   constructor() {
-    afterNextRender(() => this.trackScroll());
+    afterNextRender(() => {
+      this.trackScroll();
+      void this.useUserLocation();
+    });
+  }
+
+  /** Asks for the browser location; on success the globe zooms there instead of Leiria. */
+  private async useUserLocation(): Promise<void> {
+    const position = await this.geolocation.locate();
+    if (!position) return; // Denied or unavailable: keep Leiria.
+
+    this.target.set(position);
+    this.placeName.set(null);
+    const name = await firstValueFrom(
+      this.geocoding.reverse(position.latitude, position.longitude, this.translation.language()),
+    );
+    this.placeName.set(name);
   }
 
   private headerHeight(): number {

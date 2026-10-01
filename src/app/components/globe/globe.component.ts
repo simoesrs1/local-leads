@@ -4,11 +4,18 @@ import {
   DestroyRef,
   ElementRef,
   afterNextRender,
+  computed,
   inject,
   input,
   viewChild,
 } from '@angular/core';
-import { GeoPermissibleObjects, geoGraticule10, geoOrthographic, geoPath } from 'd3-geo';
+import {
+  GeoPermissibleObjects,
+  geoContains,
+  geoGraticule10,
+  geoOrthographic,
+  geoPath,
+} from 'd3-geo';
 import { feature, mesh } from 'topojson-client';
 import type { GeometryCollection, Topology } from 'topojson-specification';
 import countriesAtlas from 'world-atlas/countries-110m.json';
@@ -16,7 +23,7 @@ import countriesAtlas from 'world-atlas/countries-110m.json';
 export interface GlobeTarget {
   latitude: number;
   longitude: number;
-  /** ISO 3166-1 numeric id of the country to highlight (e.g. "620" = Portugal). */
+  /** ISO 3166-1 numeric id of the country to highlight (e.g. "620" = Portugal). Detected from the coordinates when omitted. */
   countryId?: string;
 }
 
@@ -95,6 +102,17 @@ export class GlobeComponent {
   private readonly graticule = geoGraticule10();
   private readonly projection = geoOrthographic().clipAngle(90).precision(0.3);
   private readonly pins = this.createPins();
+
+  /** Country containing the target, used for the highlight. */
+  private readonly targetCountry = computed(() => {
+    const { latitude, longitude, countryId } = this.target();
+    return this.countries.features.find((country) =>
+      countryId ? country.id === countryId : geoContains(country, [longitude, latitude]),
+    );
+  });
+
+  /** Position actually drawn; eases towards `target` so a late change (e.g. geolocation) glides instead of jumping. */
+  private current: { latitude: number; longitude: number } | null = null;
   private readonly streets = this.createStreets();
 
   constructor() {
@@ -139,7 +157,7 @@ export class GlobeComponent {
     seconds: number,
   ): void {
     const progress = this.progress();
-    const target = this.target();
+    const target = this.follow(this.target());
     const rotate = easeInOut(phase(progress, PHASE.rotate));
     const zoom = easeInOut(phase(progress, PHASE.zoom));
     const city = phase(progress, PHASE.city);
@@ -166,12 +184,21 @@ export class GlobeComponent {
       this.drawAtmosphere(ctx, cx, cy, scale, zoom);
       this.drawSphere(ctx, path, cx, cy, scale);
       // The highlight fades while diving so the zoomed-in country is not a flat block of colour.
-      this.drawCountries(ctx, path, target, rotate * (1 - zoom * 0.75));
+      this.drawCountries(ctx, path, rotate * (1 - zoom * 0.75));
       if (rotate > 0.4) this.drawTargetPulse(ctx, target, seconds, (rotate - 0.4) / 0.6);
       ctx.globalAlpha = 1;
     }
 
     if (city > 0) this.drawCity(ctx, width, height, city, progress, seconds);
+  }
+
+  /** Moves the drawn position ~8% of the way to the target per frame (longitude takes the short way round). */
+  private follow(target: GlobeTarget): { latitude: number; longitude: number } {
+    if (!this.current) this.current = { latitude: target.latitude, longitude: target.longitude };
+    const deltaLongitude = ((target.longitude - this.current.longitude + 540) % 360) - 180;
+    this.current.latitude += (target.latitude - this.current.latitude) * 0.08;
+    this.current.longitude += deltaLongitude * 0.08;
+    return this.current;
   }
 
   private drawAtmosphere(
@@ -225,7 +252,6 @@ export class GlobeComponent {
   private drawCountries(
     ctx: CanvasRenderingContext2D,
     path: ReturnType<typeof geoPath>,
-    target: GlobeTarget,
     rotate: number,
   ): void {
     ctx.beginPath();
@@ -240,7 +266,7 @@ export class GlobeComponent {
     ctx.stroke();
 
     // Highlight the target country as it rotates into view.
-    const country = this.countries.features.find((item) => item.id === target.countryId);
+    const country = this.targetCountry();
     if (country && rotate > 0) {
       ctx.beginPath();
       path(country);
@@ -254,7 +280,7 @@ export class GlobeComponent {
 
   private drawTargetPulse(
     ctx: CanvasRenderingContext2D,
-    target: GlobeTarget,
+    target: { latitude: number; longitude: number },
     seconds: number,
     strength: number,
   ): void {

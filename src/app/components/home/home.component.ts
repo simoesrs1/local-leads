@@ -16,6 +16,7 @@ import { GeocodingService } from '../../services/geocoding.service';
 import { GeolocationService } from '../../services/geolocation.service';
 import { LayoutService } from '../../services/layout.service';
 import { TranslationService } from '../../services/translation.service';
+import { SearchParams, toSearchParams } from '../../utils/search-params.utils';
 import { GlobeComponent, GlobeTarget } from '../globe/globe.component';
 import { IconComponent, IconName } from '../icon/icon.component';
 
@@ -63,6 +64,16 @@ export class HomeComponent {
   });
   /** Label shown next to the target while zooming; null = "your location" (name still loading). */
   protected readonly placeName = signal<string | null>('Leiria, Portugal');
+  /** Position shared by the user, or null when denied/unavailable. */
+  private readonly userPosition = signal<{ latitude: number; longitude: number } | null>(null);
+
+  /** Query params for the "start searching" buttons: search around the user if we know where they are. */
+  protected readonly searchParams = computed<SearchParams | null>(() => {
+    const position = this.userPosition();
+    if (!position) return null;
+    const locality = this.placeName() ?? this.translation.translate('HOME.YOUR_LOCATION');
+    return toSearchParams(locality, position);
+  });
 
   protected readonly steps: { icon: IconName; key: string }[] = [
     { icon: 'pin', key: 'HOME.STEP_1' },
@@ -91,6 +102,7 @@ export class HomeComponent {
     const position = await this.geolocation.locate();
     if (!position) return; // Denied or unavailable: keep Leiria.
 
+    this.userPosition.set(position);
     this.target.set(position);
     this.placeName.set(null);
     const name = await firstValueFrom(

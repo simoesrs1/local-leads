@@ -20,7 +20,13 @@ export interface SearchCriteria {
   categories: BusinessCategory[];
   radiusKm: number;
   source: LeadSource;
+  /** Known coordinates (e.g. from browser geolocation); when set, the locality is not geocoded. */
+  center?: { latitude: number; longitude: number };
 }
+
+/** Defaults used by the search bar and by searches started from a link. */
+export const DEFAULT_RADIUS_KM = 2;
+export const DEFAULT_SOURCE: LeadSource = 'osm';
 
 /** Result of geocoding a locality. */
 export interface GeoLocation {

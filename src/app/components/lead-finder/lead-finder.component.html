@@ -10,6 +10,7 @@
   <app-search-bar
     [loading]="store.loading()"
     [sources]="store.availableSources"
+    [criteria]="store.criteria()"
     (search)="onSearch($event)"
   />
 

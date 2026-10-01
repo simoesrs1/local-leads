@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Subscription, switchMap } from 'rxjs';
+import { Observable, Subscription, of, switchMap } from 'rxjs';
 import { DEFAULT_FILTERS, LeadFilters } from '../models/filter.model';
 import { Lead, LeadSource } from '../models/lead.model';
 import { GeoLocation, SearchCriteria } from '../models/search.model';
@@ -71,8 +71,12 @@ export class LeadSearchService {
     this._location.set(null);
     this.filters.set({ ...DEFAULT_FILTERS });
 
-    this.searchSubscription = this.geocoding
-      .geocode(criteria.locality)
+    // Coordinates from geolocation are exact, so only free text needs geocoding.
+    const location$: Observable<GeoLocation> = criteria.center
+      ? of({ displayName: criteria.locality, ...criteria.center })
+      : this.geocoding.geocode(criteria.locality);
+
+    this.searchSubscription = location$
       .pipe(
         switchMap((location) => {
           this._location.set(location);

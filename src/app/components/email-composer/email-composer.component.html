@@ -197,7 +197,12 @@
           <strong>{{ leadName(result.leadId) }}</strong>
           <span class="results__to">→ {{ result.to || '—' }}</span>
           @if (result.error) {
-            <small class="results__error">{{ result.error | translate }}</small>
+            <small class="results__error">
+              {{ result.error | translate }}
+              @if (result.detail) {
+                <span class="results__detail">{{ result.detail }}</span>
+              }
+            </small>
           }
         </li>
       }

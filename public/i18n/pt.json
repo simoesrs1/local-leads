@@ -190,6 +190,8 @@
   "EMAIL_ERRORS.FROM_INVALID": "O email do remetente nas Definições não é válido.",
   "EMAIL_ERRORS.TEST_EMAIL_INVALID": "O modo de teste precisa de um email de teste (ou de remetente) válido.",
   "EMAIL_ERRORS.SMTP_FAILED": "Não foi possível ligar ao servidor SMTP. Verifica o servidor, porta, utilizador e password.",
+  "EMAIL_ERRORS.GMAIL_AUTH_FAILED": "O Gmail recusou o login. Usa uma password de aplicação (não a tua password normal): ativa a verificação em 2 passos, cria uma em myaccount.google.com/apppasswords, cola-a nas Definições e usa o teu endereço Gmail completo como utilizador.",
+  "EMAIL_ERRORS.AUTH_FAILED": "O servidor SMTP recusou o utilizador ou a password.",
   "EMAIL_ERRORS.INVALID_REQUEST": "Dados inválidos.",
   "EMAIL_ERRORS.NO_RECIPIENT": "Este negócio não tem email.",
 

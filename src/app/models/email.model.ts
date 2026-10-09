@@ -98,7 +98,10 @@ export interface SendEmailResult {
   /** Address the email was actually sent to (the test address in test mode). */
   to: string | null;
   testMode: boolean;
+  /** Translation key explaining a failure or skip. */
   error?: string;
+  /** Technical message from the SMTP server, if any. */
+  detail?: string;
 }
 
 /** Error body returned by the server: a translation key plus optional technical detail. */

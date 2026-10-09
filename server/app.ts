@@ -15,6 +15,7 @@ import {
   fromHeader,
   mergeSettings,
   resolveDelivery,
+  smtpErrorKey,
   textToHtml,
   toPublicSettings,
   validateSettings,
@@ -74,7 +75,7 @@ export function createApp(deps: AppDeps): express.Express {
     try {
       await deps.transport(settings).verify();
     } catch (error) {
-      throw new HttpError(502, 'EMAIL_ERRORS.SMTP_FAILED', (error as Error).message);
+      throw new HttpError(502, smtpErrorKey(settings, error), (error as Error).message);
     }
     res.json({ ok: true });
   });
@@ -159,7 +160,13 @@ export function createApp(deps: AppDeps): express.Express {
       });
       final = { ...result, to: delivery.to };
     } catch (error) {
-      final = { ...result, to: delivery.to, status: 'failed', error: (error as Error).message };
+      final = {
+        ...result,
+        to: delivery.to,
+        status: 'failed',
+        error: smtpErrorKey(settings, error),
+        detail: (error as Error).message,
+      };
     }
 
     // Every attempt (test or live, sent or failed) is logged; only live "sent" marks a lead as contacted.
@@ -174,7 +181,7 @@ export function createApp(deps: AppDeps): express.Express {
       templateName: message.templateName ?? null,
       testMode: settings.testMode,
       status: final.status === 'sent' ? 'sent' : 'failed',
-      error: final.error,
+      error: final.detail ?? final.error,
       sentAt: new Date().toISOString(),
     });
     res.json(final);

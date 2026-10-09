@@ -190,6 +190,8 @@
   "EMAIL_ERRORS.FROM_INVALID": "The sender email in Settings is not valid.",
   "EMAIL_ERRORS.TEST_EMAIL_INVALID": "Test mode needs a valid test email (or sender email).",
   "EMAIL_ERRORS.SMTP_FAILED": "Could not connect to the SMTP server. Check host, port, user and password.",
+  "EMAIL_ERRORS.GMAIL_AUTH_FAILED": "Gmail rejected the login. Use an app password (not your normal password): turn on 2-Step Verification, create one at myaccount.google.com/apppasswords, paste it in Settings and use your full Gmail address as username.",
+  "EMAIL_ERRORS.AUTH_FAILED": "The SMTP server rejected the username or password.",
   "EMAIL_ERRORS.INVALID_REQUEST": "Invalid data.",
   "EMAIL_ERRORS.NO_RECIPIENT": "This business has no email address.",
 

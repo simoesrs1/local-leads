@@ -27,10 +27,18 @@
     @if (store.location(); as location) {
       <p class="finder__location">
         <app-icon name="pin" [size]="16" />
-        {{
-          'SEARCH.RESULTS_NEAR'
-            | translate: { location: location.displayName, radius: store.criteria()!.radiusKm }
-        }}
+        @if (store.criteria()!.sector; as sector) {
+          {{
+            'SEARCH.RESULTS_SECTOR_NEAR'
+              | translate
+                : { sector, location: location.displayName, radius: store.criteria()!.radiusKm }
+          }}
+        } @else {
+          {{
+            'SEARCH.RESULTS_NEAR'
+              | translate: { location: location.displayName, radius: store.criteria()!.radiusKm }
+          }}
+        }
       </p>
     }
 

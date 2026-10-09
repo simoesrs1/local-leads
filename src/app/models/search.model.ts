@@ -17,6 +17,8 @@ export type BusinessCategory = (typeof BUSINESS_CATEGORIES)[number];
 export interface SearchCriteria {
   /** Free-text locality, e.g. "Leiria". */
   locality: string;
+  /** Optional free-text sector, e.g. "pedreiros". When set, it replaces the categories. */
+  sector?: string;
   categories: BusinessCategory[];
   radiusKm: number;
   source: LeadSource;

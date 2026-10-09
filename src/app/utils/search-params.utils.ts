@@ -8,8 +8,8 @@ import {
 
 /**
  * Query params for /search that start a search right away:
- *   /search?locality=Lisboa,%20Portugal&lat=38.72&lon=-9.14
- * `lat`/`lon` are optional; without them the locality is geocoded.
+ *   /search?locality=Lisboa,%20Portugal&lat=38.72&lon=-9.14&sector=pedreiros
+ * `lat`/`lon` are optional (without them the locality is geocoded); `sector` is optional too.
  */
 export interface SearchParams {
   locality: string;
@@ -43,8 +43,11 @@ export function criteriaFromParams(params: Params): SearchCriteria | null {
     Math.abs(latitude) <= 90 &&
     Math.abs(longitude) <= 180;
 
+  const sector = typeof params['sector'] === 'string' ? params['sector'].trim() : '';
+
   return {
     locality,
+    sector: sector || undefined,
     categories: [...BUSINESS_CATEGORIES],
     radiusKm: DEFAULT_RADIUS_KM,
     source: DEFAULT_SOURCE,

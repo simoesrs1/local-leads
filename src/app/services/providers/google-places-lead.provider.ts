@@ -88,14 +88,17 @@ export class GooglePlacesLeadProvider implements LeadProvider {
     if (!this.available) return throwError(() => new LeadSearchError('ERRORS.GOOGLE_KEY_MISSING'));
 
     // One text search per category, run in parallel.
-    const requests = criteria.categories.map((category) =>
-      this.searchCategory(category, location, criteria),
-    );
+    // A free-text sector is a single query ("pedreiros in Leiria"); otherwise one per category.
+    const sector = criteria.sector?.trim();
+    const queries = sector
+      ? [sector]
+      : criteria.categories.map((category) => CATEGORY_QUERIES[category]);
+    const requests = queries.map((query) => this.searchCategory(query, location, criteria));
     return forkJoin(requests).pipe(map((pages) => pages.flat()));
   }
 
   private searchCategory(
-    category: BusinessCategory,
+    query: string,
     location: GeoLocation,
     criteria: SearchCriteria,
   ): Observable<Lead[]> {
@@ -107,7 +110,7 @@ export class GooglePlacesLeadProvider implements LeadProvider {
       this.http.post<SearchTextResponse>(
         this.endpoint,
         {
-          textQuery: `${CATEGORY_QUERIES[category]} in ${criteria.locality}`,
+          textQuery: `${query} in ${criteria.locality}`,
           pageSize: 20,
           pageToken,
           // Bias results around the geocoded locality (Google caps the radius at 50 km).

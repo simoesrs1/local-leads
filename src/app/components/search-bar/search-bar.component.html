@@ -17,6 +17,40 @@
       </span>
     </label>
 
+    <!-- Free-text sector: replaces the categories when filled -->
+    <label class="field search__sector">
+      <span class="field__label">{{ 'SEARCH.SECTOR_LABEL' | translate }}</span>
+      <span class="search__input">
+        <app-icon name="store" [size]="18" />
+        <input
+          class="field__control"
+          name="sector"
+          type="text"
+          autocomplete="off"
+          list="sector-suggestions"
+          maxlength="60"
+          [placeholder]="'SEARCH.SECTOR_PLACEHOLDER' | translate"
+          [ngModel]="sector()"
+          (ngModelChange)="sector.set($event)"
+        />
+        @if (sector()) {
+          <button
+            type="button"
+            class="search__clear"
+            [attr.aria-label]="'SEARCH.SECTOR_CLEAR' | translate"
+            (click)="sector.set('')"
+          >
+            <app-icon name="x" [size]="14" />
+          </button>
+        }
+      </span>
+      <datalist id="sector-suggestions">
+        @for (id of sectorIds; track id) {
+          <option [value]="'SECTORS.' + id.toUpperCase() | translate"></option>
+        }
+      </datalist>
+    </label>
+
     <label class="field">
       <span class="field__label">{{ 'SEARCH.RADIUS_LABEL' | translate }}</span>
       <select
@@ -48,7 +82,7 @@
     <button
       class="button button--primary button--large search__submit"
       type="submit"
-      [disabled]="loading() || !locality().trim() || !categories().length"
+      [disabled]="loading() || !canSubmit()"
     >
       @if (loading()) {
         <app-loader size="small" message="SEARCH.SEARCHING" />
@@ -58,7 +92,11 @@
     </button>
   </div>
 
-  <fieldset class="search__categories">
+  <fieldset
+    class="search__categories"
+    [disabled]="!!sector().trim()"
+    [class.is-muted]="!!sector().trim()"
+  >
     <legend class="search__legend">
       <span class="field__label">{{ 'SEARCH.CATEGORIES_LABEL' | translate }}</span>
       <button type="button" class="link-button" (click)="toggleAllCategories()">
@@ -68,6 +106,12 @@
         }}
       </button>
     </legend>
+    @if (sector().trim()) {
+      <p class="search__note">
+        <app-icon name="filter" [size]="14" />
+        {{ 'SEARCH.SECTOR_OVERRIDES' | translate: { sector: sector().trim() } }}
+      </p>
+    }
     @for (category of allCategories; track category) {
       <button
         type="button"

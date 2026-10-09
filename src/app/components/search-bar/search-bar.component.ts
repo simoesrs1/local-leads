@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, input, linkedSignal, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  linkedSignal,
+  output,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LeadSource } from '../../models/lead.model';
 import {
@@ -9,6 +16,7 @@ import {
   SearchCriteria,
 } from '../../models/search.model';
 import { TranslatePipe } from '../../pipes/translate.pipe';
+import { SECTORS } from '../../utils/sector.utils';
 import { IconComponent } from '../icon/icon.component';
 import { LoaderComponent } from '../loader/loader.component';
 
@@ -32,6 +40,9 @@ export class SearchBarComponent {
 
   // linkedSignal: editable locally, but reset whenever a new `criteria` comes in.
   protected readonly locality = linkedSignal(() => this.criteria()?.locality ?? '');
+  protected readonly sector = linkedSignal(() => this.criteria()?.sector ?? '');
+  /** Suggestions shown under the sector field (any text is accepted). */
+  protected readonly sectorIds = SECTORS.map((sector) => sector.id);
   protected readonly categories = linkedSignal<BusinessCategory[]>(() => [
     ...(this.criteria()?.categories ?? BUSINESS_CATEGORIES),
   ]);
@@ -54,12 +65,18 @@ export class SearchBarComponent {
     );
   }
 
+  /** Needs a locality and either a sector or at least one category. */
+  protected readonly canSubmit = computed(
+    () => !!this.locality().trim() && (!!this.sector().trim() || this.categories().length > 0),
+  );
+
   protected submit(): void {
     const locality = this.locality().trim();
-    if (!locality || !this.categories().length || this.loading()) return;
+    if (!this.canSubmit() || this.loading()) return;
     const current = this.criteria();
     this.search.emit({
       locality,
+      sector: this.sector().trim() || undefined,
       categories: this.categories(),
       radiusKm: this.radiusKm(),
       source: this.source(),

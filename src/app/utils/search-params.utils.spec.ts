@@ -32,6 +32,13 @@ describe('search params', () => {
     ).toBeUndefined();
   });
 
+  it('reads an optional sector', () => {
+    expect(criteriaFromParams({ locality: 'Leiria', sector: ' pedreiros ' })?.sector).toBe(
+      'pedreiros',
+    );
+    expect(criteriaFromParams({ locality: 'Leiria' })?.sector).toBeUndefined();
+  });
+
   it('ignores params without a locality', () => {
     expect(criteriaFromParams({})).toBeNull();
     expect(criteriaFromParams({ locality: '  ', lat: '1', lon: '1' })).toBeNull();

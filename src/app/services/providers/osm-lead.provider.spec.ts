@@ -26,6 +26,21 @@ describe('OSM provider helpers', () => {
     expect(query).toContain('out center tags;');
   });
 
+  it('searches a free-text sector by OSM tags and business names instead of categories', () => {
+    const query = buildOverpassQuery(leiria, {
+      locality: 'Leiria',
+      sector: 'pedreiros',
+      categories: ['shops'],
+      radiusKm: 2,
+      source: 'osm',
+    });
+    expect(query).toContain('nwr["craft"="stonemason"]["name"];');
+    expect(query).toContain('nwr["craft"]["name"~"p(e|é|è|ê)dr(e|é|è|ê)(i|í|ì)",i];');
+    expect(query).toContain('nwr["shop"]["name"~"p(e|é|è|ê)dr(e|é|è|ê)(i|í|ì)",i];');
+    // Categories are ignored while a sector is set.
+    expect(query).not.toContain('nwr["shop"]["name"];');
+  });
+
   it('detects Overpass runtime errors returned with HTTP 200', () => {
     expect(
       hasRuntimeError({

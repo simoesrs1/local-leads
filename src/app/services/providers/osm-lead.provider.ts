@@ -4,6 +4,7 @@ import { Observable, catchError, map, throwError } from 'rxjs';
 import { Lead } from '../../models/lead.model';
 import { BusinessCategory, GeoLocation, SearchCriteria } from '../../models/search.model';
 import { boundingBox, distanceKm } from '../../utils/geo.utils';
+import { nameRegex, sectorSelectors } from '../../utils/sector.utils';
 import { isMobilePhone, splitPhones } from '../../utils/phone.utils';
 import { buildMapsUrl, humanize } from '../../utils/text.utils';
 import { LeadSearchError } from '../lead-search.error';
@@ -51,12 +52,29 @@ export function buildOverpassQuery(location: GeoLocation, criteria: SearchCriter
   // with broad filters like ["shop"] was timing out (>60 s) on overpass-api.de.
   // The circle is applied client-side afterwards (see `withinRadius`).
   const bbox = boundingBox(location.latitude, location.longitude, criteria.radiusKm).join(',');
+  const sector = criteria.sector?.trim();
+  const statements = (sector ? sectorStatements(sector) : categoryStatements(criteria)).join('\n');
+  // `out center tags` returns a centre point for ways/relations so every lead has coordinates.
+  return `[out:json][timeout:${QUERY_TIMEOUT_S}][bbox:${bbox}];\n(\n${statements}\n);\nout center tags;`;
+}
+
+function categoryStatements(criteria: SearchCriteria): string[] {
   const selectors = new Set(
     criteria.categories.flatMap((category) => CATEGORY_SELECTORS[category]),
   );
-  const statements = [...selectors].map((selector) => `  nwr${selector}["name"];`).join('\n');
-  // `out center tags` returns a centre point for ways/relations so every lead has coordinates.
-  return `[out:json][timeout:${QUERY_TIMEOUT_S}][bbox:${bbox}];\n(\n${statements}\n);\nout center tags;`;
+  return [...selectors].map((selector) => `  nwr${selector}["name"];`);
+}
+
+/**
+ * Sector search: the sector's own OSM tags (e.g. craft=stonemason for "pedreiros") plus any
+ * business (shop/craft/office/...) whose name contains the typed words ("Construções Silva").
+ * Requiring a business key keeps streets like "Rua dos Pedreiros" out.
+ */
+function sectorStatements(sector: string): string[] {
+  const byTag = sectorSelectors(sector).map((selector) => `  nwr${selector}["name"];`);
+  const regex = nameRegex(sector);
+  const byName = regex ? TYPE_KEYS.map((key) => `  nwr["${key}"]["name"~"${regex}",i];`) : [];
+  return [...byTag, ...byName];
 }
 
 /** Overpass answers HTTP 200 with a `remark` like "runtime error: Query timed out..." on failure. */

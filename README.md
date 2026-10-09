@@ -22,6 +22,10 @@ every email to your own inbox so you can check everything first.
   zooms into the visitor's location (browser geolocation, if allowed; Leiria otherwise) and turns into a
   city map where leads drop in as pins.
 - Search by locality with a configurable radius (1–20 km) and business categories.
+- **Sector search** (optional free text next to the locality, e.g. "construção", "pedreiros", "electricians"):
+  known sectors map to OpenStreetMap tags (e.g. `craft=stonemason`) and business names are matched too,
+  accent-insensitive ("Construções Silva"). Google Places uses the text directly. Suggestions are offered
+  for ~25 common sectors; any text works. Also available as `/search?locality=Leiria&sector=pedreiros`.
 - Two data sources:
   - **OpenStreetMap** (default, free, no API key) — geocoding via Nominatim, businesses via Overpass.
   - **Google Places API (New)** (optional) — enabled when an API key is set. Google does not expose emails.

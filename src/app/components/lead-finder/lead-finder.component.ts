@@ -51,6 +51,7 @@ export class LeadFinderComponent {
     // Coming back to the same link keeps the existing results instead of searching again.
     const alreadyLoaded =
       current?.locality === criteria?.locality &&
+      current?.sector === criteria?.sector &&
       current?.center?.latitude === criteria?.center?.latitude &&
       current?.center?.longitude === criteria?.center?.longitude;
     if (criteria && !alreadyLoaded) this.store.search(criteria);

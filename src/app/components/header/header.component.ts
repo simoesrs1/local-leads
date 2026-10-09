@@ -23,6 +23,7 @@ export class HeaderComponent {
     { path: '/', icon: 'home', label: 'NAV.HOME', exact: true },
     { path: '/search', icon: 'search', label: 'NAV.SEARCH', exact: false },
     { path: '/templates', icon: 'fileText', label: 'NAV.TEMPLATES', exact: false },
+    { path: '/history', icon: 'clock', label: 'NAV.HISTORY', exact: false },
     { path: '/settings', icon: 'settings', label: 'NAV.SETTINGS', exact: false },
   ];
 

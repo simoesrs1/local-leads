@@ -2,8 +2,15 @@ import { LeadFilters, PresenceFilter } from '../models/filter.model';
 import { Lead } from '../models/lead.model';
 import { normalizeText } from './text.utils';
 
-/** Pure filter so it can be reused in computed signals and unit-tested in isolation. */
-export function filterLeads(leads: Lead[], filters: LeadFilters): Lead[] {
+/**
+ * Pure filter so it can be reused in computed signals and unit-tested in isolation.
+ * `isContacted` comes from the send history (defaults to "never contacted").
+ */
+export function filterLeads(
+  leads: Lead[],
+  filters: LeadFilters,
+  isContacted: (lead: Lead) => boolean = () => false,
+): Lead[] {
   const text = normalizeText(filters.text);
 
   return leads.filter((lead) => {
@@ -20,6 +27,9 @@ export function filterLeads(leads: Lead[], filters: LeadFilters): Lead[] {
 
     if (!matchesPresence(filters.email, !!lead.email)) return false;
     if (!matchesPresence(filters.website, !!lead.website)) return false;
+    if (filters.contacted !== 'any' && !matchesPresence(filters.contacted, isContacted(lead))) {
+      return false;
+    }
 
     if (text) {
       const haystack = normalizeText(`${lead.name} ${lead.type} ${lead.address ?? ''}`);

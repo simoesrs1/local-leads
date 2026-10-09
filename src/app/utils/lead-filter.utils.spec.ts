@@ -68,6 +68,16 @@ describe('filterLeads', () => {
     expect(names({ text: 'LEIRIA' })).toEqual(['Email only']);
   });
 
+  it('filters by contact history', () => {
+    const contacted = (item: Lead) => item.name === 'Full';
+    const run = (value: LeadFilters['contacted']) =>
+      filterLeads(leads, { ...DEFAULT_FILTERS, contacted: value }, contacted).map(
+        (item) => item.name,
+      );
+    expect(run('with')).toEqual(['Full']);
+    expect(run('without')).toEqual(['Landline only', 'Email only', 'Nothing']);
+  });
+
   it('filters by exact type', () => {
     expect(names({ type: 'Café' })).toEqual(['Landline only']);
   });

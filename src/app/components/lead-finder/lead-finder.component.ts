@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { LeadFilters } from '../../models/filter.model';
 import { SearchCriteria } from '../../models/search.model';
 import { TranslatePipe } from '../../pipes/translate.pipe';
+import { EmailHistoryService } from '../../services/email-history.service';
 import { LeadSearchService } from '../../services/lead-search.service';
 import { criteriaFromParams } from '../../utils/search-params.utils';
 import { EmailComposerComponent } from '../email-composer/email-composer.component';
@@ -42,6 +43,8 @@ export class LeadFinderComponent {
   );
 
   constructor() {
+    // "Contacted" marks and filter; silently empty when the email server is not running.
+    void inject(EmailHistoryService).load();
     // A link like /search?locality=...&lat=...&lon=... (e.g. from the home page) starts the search directly.
     const criteria = criteriaFromParams(this.route.snapshot.queryParams);
     const current = this.store.criteria();

@@ -11,6 +11,7 @@ const app = createApp({
   settings: jsonStore('settings.json', () => structuredClone(DEFAULT_SETTINGS), true),
   templates: jsonStore('templates.json', () => structuredClone(DEFAULT_TEMPLATES)),
   variables: jsonStore('variables.json', () => structuredClone(DEFAULT_VARIABLES)),
+  history: jsonStore('history.json', () => []),
   transport: smtpTransport,
 });
 

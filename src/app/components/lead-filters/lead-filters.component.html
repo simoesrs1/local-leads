@@ -81,6 +81,21 @@
     </select>
   </label>
 
+  <label class="field">
+    <span class="field__label">{{ 'FILTERS.CONTACTED_LABEL' | translate }}</span>
+    <select
+      class="field__control"
+      [ngModel]="filters().contacted"
+      (ngModelChange)="filtersChange.emit({ contacted: $event })"
+    >
+      @for (option of presenceOptions; track option) {
+        <option [value]="option">
+          {{ 'FILTERS.CONTACTED_' + option.toUpperCase() | translate }}
+        </option>
+      }
+    </select>
+  </label>
+
   <label class="filters__checkbox">
     <input
       type="checkbox"

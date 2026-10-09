@@ -15,6 +15,8 @@ export interface LeadFilters {
   website: PresenceFilter;
   /** Only businesses with no phone, no email and no website. */
   noContactData: boolean;
+  /** Already emailed (live mode) according to the send history. */
+  contacted: PresenceFilter;
 }
 
 export const DEFAULT_FILTERS: LeadFilters = {
@@ -24,4 +26,5 @@ export const DEFAULT_FILTERS: LeadFilters = {
   email: 'any',
   website: 'any',
   noContactData: false,
+  contacted: 'any',
 };

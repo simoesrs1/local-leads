@@ -1,13 +1,15 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { Lead } from '../../models/lead.model';
 import { TranslatePipe } from '../../pipes/translate.pipe';
+import { EmailHistoryService } from '../../services/email-history.service';
 import { isMobilePhone } from '../../utils/phone.utils';
 import { downloadCsv, leadsToCsv } from '../../utils/csv.utils';
 import { IconComponent } from '../icon/icon.component';
 
 @Component({
   selector: 'app-lead-table',
-  imports: [IconComponent, TranslatePipe],
+  imports: [DatePipe, IconComponent, TranslatePipe],
   templateUrl: './lead-table.component.html',
   styleUrl: './lead-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,6 +34,7 @@ export class LeadTableComponent {
   }
 
   protected readonly isMobile = isMobilePhone;
+  protected readonly history = inject(EmailHistoryService);
 
   protected telHref(phone: string): string {
     return `tel:${phone.replace(/[^\d+]/g, '')}`;

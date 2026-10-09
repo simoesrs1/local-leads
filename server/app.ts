@@ -1,8 +1,10 @@
+import { randomUUID } from 'node:crypto';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import type {
   ApiError,
   EmailSettingsUpdate,
   EmailTemplate,
+  HistoryEntry,
   SendEmailRequest,
   SendEmailResult,
   TemplateVariable,
@@ -23,6 +25,7 @@ export interface AppDeps {
   settings: Store<StoredSettings>;
   templates: Store<EmailTemplate[]>;
   variables: Store<TemplateVariable[]>;
+  history: Store<HistoryEntry[]>;
   transport: TransportFactory;
 }
 
@@ -145,6 +148,7 @@ export function createApp(deps: AppDeps): express.Express {
       return;
     }
 
+    let final: SendEmailResult;
     try {
       await deps.transport(settings).sendMail({
         from: fromHeader(settings),
@@ -153,10 +157,64 @@ export function createApp(deps: AppDeps): express.Express {
         text: delivery.text,
         html: textToHtml(delivery.text),
       });
-      res.json({ ...result, to: delivery.to });
+      final = { ...result, to: delivery.to };
     } catch (error) {
-      res.json({ ...result, to: delivery.to, status: 'failed', error: (error as Error).message });
+      final = { ...result, to: delivery.to, status: 'failed', error: (error as Error).message };
     }
+
+    // Every attempt (test or live, sent or failed) is logged; only live "sent" marks a lead as contacted.
+    await appendHistory({
+      id: randomUUID(),
+      leadId: message.leadId,
+      leadName: message.leadName ?? message.leadId,
+      leadEmail: message.to?.trim() || null,
+      to: delivery.to,
+      subject: message.subject,
+      templateId: message.templateId ?? null,
+      templateName: message.templateName ?? null,
+      testMode: settings.testMode,
+      status: final.status === 'sent' ? 'sent' : 'failed',
+      error: final.error,
+      sentAt: new Date().toISOString(),
+    });
+    res.json(final);
+  });
+
+  // ---- History ---------------------------------------------------------------------------
+  // Writes are chained so concurrent sends never overwrite each other's entries.
+  let historyQueue: Promise<unknown> = Promise.resolve();
+  const appendHistory = (entry: HistoryEntry) => {
+    const next = historyQueue.then(async () => {
+      const entries = await deps.history.read();
+      await deps.history.write([...entries, entry]);
+    });
+    historyQueue = next.catch(() => undefined);
+    return next;
+  };
+  const updateHistory = (change: (entries: HistoryEntry[]) => HistoryEntry[]) => {
+    const next = historyQueue.then(async () =>
+      deps.history.write(change(await deps.history.read())),
+    );
+    historyQueue = next.catch(() => undefined);
+    return next;
+  };
+
+  app.get('/api/history', async (_req, res) => {
+    const entries = await deps.history.read();
+    // Entries are appended in order, so reversing gives newest first (even within the same millisecond).
+    res.json([...entries].reverse());
+  });
+
+  app.delete('/api/history/:id', async (req, res) => {
+    await updateHistory((entries) => entries.filter((entry) => entry.id !== req.params['id']));
+    res.status(204).end();
+  });
+
+  /** Clears the history; `?testOnly=true` keeps the real sends. */
+  app.delete('/api/history', async (req, res) => {
+    const testOnly = req.query['testOnly'] === 'true';
+    await updateHistory((entries) => (testOnly ? entries.filter((entry) => !entry.testMode) : []));
+    res.status(204).end();
   });
 
   // Express 5 forwards rejected promises here.

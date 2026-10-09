@@ -17,6 +17,11 @@ export const routes: Routes = [
       import('./components/templates/templates.component').then((m) => m.TemplatesComponent),
   },
   {
+    path: 'history',
+    loadComponent: () =>
+      import('./components/history/history.component').then((m) => m.HistoryComponent),
+  },
+  {
     path: 'settings',
     loadComponent: () =>
       import('./components/settings/settings.component').then((m) => m.SettingsComponent),

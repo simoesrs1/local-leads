@@ -52,6 +52,21 @@
                   <div>
                     <strong>{{ lead.name }}</strong>
                     <span class="results__type">{{ lead.type }}</span>
+                    @if (history.lastContact(lead); as contact) {
+                      <span
+                        class="pill pill--primary results__contacted"
+                        [title]="
+                          contact.subject +
+                          (contact.templateName ? ' · ' + contact.templateName : '')
+                        "
+                      >
+                        <app-icon name="send" [size]="11" />
+                        {{
+                          'HISTORY.CONTACTED_ON'
+                            | translate: { date: (contact.sentAt | date: 'dd/MM/yyyy') ?? '' }
+                        }}
+                      </span>
+                    }
                   </div>
                 </div>
               </td>

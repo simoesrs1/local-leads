@@ -6,6 +6,7 @@ import {
   EmailSettings,
   EmailSettingsUpdate,
   EmailTemplate,
+  HistoryEntry,
   SendEmailRequest,
   SendEmailResult,
   TemplateVariable,
@@ -46,6 +47,19 @@ export class EmailApiService {
 
   send(message: SendEmailRequest): Observable<SendEmailResult> {
     return this.http.post<SendEmailResult>('/api/email/send', message);
+  }
+
+  getHistory(): Observable<HistoryEntry[]> {
+    return this.http.get<HistoryEntry[]>('/api/history');
+  }
+
+  deleteHistoryEntry(id: string): Observable<void> {
+    return this.http.delete<void>(`/api/history/${encodeURIComponent(id)}`);
+  }
+
+  /** Clears the history; with `testOnly` the real sends are kept. */
+  clearHistory(testOnly: boolean): Observable<void> {
+    return this.http.delete<void>('/api/history', { params: { testOnly } });
   }
 }
 

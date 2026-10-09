@@ -63,6 +63,20 @@
       }
     </p>
 
+    @if (!testMode() && alreadyContacted()) {
+      <label class="composer__skip">
+        <input
+          type="checkbox"
+          [ngModel]="skipContacted()"
+          (ngModelChange)="skipContacted.set($event)"
+        />
+        <span>
+          {{ 'HISTORY.SKIP_CONTACTED' | translate: { count: alreadyContacted() } }}
+          <small>{{ 'HISTORY.SKIP_CONTACTED_HINT' | translate }}</small>
+        </span>
+      </label>
+    }
+
     @if (unknownKeys().length) {
       <div class="notice notice--warning">
         <app-icon name="braces" [size]="18" />
@@ -97,6 +111,9 @@
               }
             </span>
           </div>
+          @if (previewSkipReason(); as reason) {
+            <span class="pill pill--warning">{{ reason | translate }}</span>
+          }
           <span class="preview__counter">{{ previewIndex() + 1 }} / {{ emails().length }}</span>
           <button
             type="button"

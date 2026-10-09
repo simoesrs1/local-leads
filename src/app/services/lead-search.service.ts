@@ -5,6 +5,7 @@ import { Lead, LeadSource } from '../models/lead.model';
 import { GeoLocation, SearchCriteria } from '../models/search.model';
 import { LeadStats } from '../models/stats.model';
 import { filterLeads } from '../utils/lead-filter.utils';
+import { EmailHistoryService } from './email-history.service';
 import { GeocodingService } from './geocoding.service';
 import { LeadSearchError } from './lead-search.error';
 import { LEAD_PROVIDERS } from './providers/lead-provider';
@@ -14,6 +15,7 @@ import { LEAD_PROVIDERS } from './providers/lead-provider';
 export class LeadSearchService {
   private readonly geocoding = inject(GeocodingService);
   private readonly providers = inject(LEAD_PROVIDERS);
+  private readonly history = inject(EmailHistoryService);
   private searchSubscription?: Subscription;
 
   private readonly _leads = signal<Lead[]>([]);
@@ -29,7 +31,10 @@ export class LeadSearchService {
   readonly criteria = this._criteria.asReadonly();
   readonly filters = signal<LeadFilters>({ ...DEFAULT_FILTERS });
 
-  readonly filteredLeads = computed(() => filterLeads(this._leads(), this.filters()));
+  // isContacted reads the history signal, so the list updates when the history changes.
+  readonly filteredLeads = computed(() =>
+    filterLeads(this._leads(), this.filters(), this.history.isContacted),
+  );
 
   /** Ids of the leads ticked in the results table (for bulk email). */
   readonly selectedIds = signal<ReadonlySet<string>>(new Set());

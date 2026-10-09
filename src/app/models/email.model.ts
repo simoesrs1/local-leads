@@ -66,6 +66,28 @@ export interface SendEmailRequest {
   to: string | null;
   subject: string;
   text: string;
+  /** Kept in the history so entries stay readable after the search results are gone. */
+  leadName?: string;
+  templateId?: string;
+  templateName?: string;
+}
+
+/** One send attempt, stored by the server in history.json. */
+export interface HistoryEntry {
+  id: string;
+  leadId: string;
+  leadName: string;
+  /** The business's address, even when test mode redirected the email elsewhere. */
+  leadEmail: string | null;
+  /** Address the email was actually delivered to. */
+  to: string;
+  subject: string;
+  templateId: string | null;
+  templateName: string | null;
+  testMode: boolean;
+  status: 'sent' | 'failed';
+  error?: string;
+  sentAt: string;
 }
 
 export type SendStatus = 'sent' | 'skipped' | 'failed';

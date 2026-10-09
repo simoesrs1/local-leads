@@ -54,6 +54,8 @@ describe('translations', () => {
       ...LEAD_FIELDS.map((field) => `FIELDS.${field.toUpperCase()}`),
       'SETTINGS.PRESET_GMAIL',
       'SETTINGS.PRESET_OFFICE365',
+      ...['ANY', 'WITH', 'WITHOUT'].map((option) => `FILTERS.CONTACTED_${option}`),
+      ...['ALL', 'LIVE', 'TEST'].map((mode) => `HISTORY.MODE_${mode}`),
     ];
     expect([...dynamic, ...homeSections, ...emailKeys].filter((key) => !(key in en))).toEqual([]);
   });

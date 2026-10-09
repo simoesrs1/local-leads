@@ -1,0 +1,157 @@
+<div class="container page">
+  <header class="page__intro">
+    <span class="eyebrow"
+      ><app-icon name="clock" [size]="14" /> {{ 'HISTORY.EYEBROW' | translate }}</span
+    >
+    <h1>{{ 'HISTORY.TITLE' | translate }}</h1>
+    <p>{{ 'HISTORY.SUBTITLE' | translate }}</p>
+  </header>
+
+  @if (history.loadErrorKey(); as loadError) {
+    <div class="alert" role="alert">
+      <app-icon name="alert" [size]="20" />
+      <span>{{ loadError | translate }}</span>
+      <button type="button" class="button" (click)="history.load(true)">
+        {{ 'COMMON.RETRY' | translate }}
+      </button>
+    </div>
+  } @else if (!history.loaded()) {
+    <app-loader class="card" size="large" message="COMMON.LOADING" />
+  } @else {
+    <div class="summary">
+      <div class="summary__tile">
+        <strong>{{ counts().contacted }}</strong>
+        <span>{{ 'HISTORY.STAT_CONTACTED' | translate }}</span>
+      </div>
+      <div class="summary__tile">
+        <strong>{{ counts().live }}</strong>
+        <span>{{ 'HISTORY.STAT_LIVE' | translate }}</span>
+      </div>
+      <div class="summary__tile">
+        <strong>{{ counts().test }}</strong>
+        <span>{{ 'HISTORY.STAT_TEST' | translate }}</span>
+      </div>
+      <div class="summary__tile" [class.summary__tile--danger]="counts().failed">
+        <strong>{{ counts().failed }}</strong>
+        <span>{{ 'HISTORY.STAT_FAILED' | translate }}</span>
+      </div>
+    </div>
+
+    <section class="card list">
+      <div class="toolbar">
+        <input
+          class="field__control toolbar__search"
+          type="search"
+          [placeholder]="'HISTORY.SEARCH' | translate"
+          [ngModel]="text()"
+          (ngModelChange)="text.set($event)"
+        />
+        <div class="segmented" role="group">
+          @for (option of modes; track option) {
+            <button
+              type="button"
+              [class.is-active]="mode() === option"
+              [attr.aria-pressed]="mode() === option"
+              (click)="mode.set(option)"
+            >
+              {{ 'HISTORY.MODE_' + option.toUpperCase() | translate }}
+            </button>
+          }
+        </div>
+        <span class="toolbar__spacer"></span>
+        <button type="button" class="button" [disabled]="!counts().test" (click)="clear(true)">
+          <app-icon name="flask" [size]="16" /> {{ 'HISTORY.CLEAR_TEST' | translate }}
+        </button>
+        <button
+          type="button"
+          class="button toolbar__danger"
+          [disabled]="!history.entries().length"
+          (click)="clear(false)"
+        >
+          <app-icon name="trash" [size]="16" /> {{ 'HISTORY.CLEAR_ALL' | translate }}
+        </button>
+      </div>
+
+      @if (errorKey(); as error) {
+        <p class="error">{{ error | translate }}</p>
+      }
+
+      @if (filtered().length) {
+        <div class="scroll">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>{{ 'HISTORY.DATE' | translate }}</th>
+                <th>{{ 'HISTORY.BUSINESS' | translate }}</th>
+                <th>{{ 'HISTORY.SENT_TO' | translate }}</th>
+                <th>{{ 'EMAIL.SUBJECT' | translate }}</th>
+                <th>{{ 'HISTORY.STATUS' | translate }}</th>
+                <th>
+                  <span class="visually-hidden">{{ 'COMMON.REMOVE' | translate }}</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of filtered(); track entry.id) {
+                <tr>
+                  <td class="table__date">{{ entry.sentAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                  <td>
+                    <strong>{{ entry.leadName }}</strong>
+                    @if (entry.templateName) {
+                      <span class="table__muted">{{ entry.templateName }}</span>
+                    }
+                  </td>
+                  <td>
+                    {{ entry.to }}
+                    @if (entry.testMode) {
+                      <span class="table__muted"
+                        >{{ 'EMAIL.ORIGINAL' | translate }}: {{ entry.leadEmail || '—' }}</span
+                      >
+                    }
+                  </td>
+                  <td class="table__subject">{{ entry.subject }}</td>
+                  <td>
+                    <div class="table__pills">
+                      @if (entry.testMode) {
+                        <span class="pill pill--warning">{{ 'HISTORY.TEST' | translate }}</span>
+                      } @else {
+                        <span class="pill pill--primary">{{ 'HISTORY.LIVE' | translate }}</span>
+                      }
+                      @if (entry.status === 'sent') {
+                        <span class="pill pill--success">{{
+                          'EMAIL.STATUS_SENT' | translate
+                        }}</span>
+                      } @else {
+                        <span class="pill pill--danger" [title]="entry.error ?? ''">{{
+                          'EMAIL.STATUS_FAILED' | translate
+                        }}</span>
+                      }
+                    </div>
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      class="table__remove"
+                      [attr.aria-label]="'COMMON.REMOVE' | translate"
+                      [title]="'COMMON.REMOVE' | translate"
+                      (click)="remove(entry.id)"
+                    >
+                      <app-icon name="trash" [size]="15" />
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="empty">
+          <app-icon name="mail" [size]="24" />
+          <p>
+            {{ (history.entries().length ? 'HISTORY.NO_MATCHES' : 'HISTORY.EMPTY') | translate }}
+          </p>
+        </div>
+      }
+    </section>
+  }
+</div>

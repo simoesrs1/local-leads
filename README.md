@@ -37,6 +37,9 @@ every email to your own inbox so you can check everything first.
   - settings page for the SMTP account (presets for Gmail / Microsoft 365, connection test);
   - **test mode** (on by default): every email goes to your own address with a `[TESTE]` subject.
     It is enforced by the server, so the browser cannot bypass it.
+  - **send history** (`/history`): every email is logged; real sends mark the business as
+    "Contacted on …" in the results, enable an "Already / Never contacted" filter and are skipped by
+    default when emailing the same leads again. Test sends are listed but never mark a lead.
 - Reusable `<app-loader>` spinner (inline, block or overlay) for any list that loads data.
 - English and Portuguese UI (`public/i18n/en.json`, `public/i18n/pt.json`).
 
@@ -58,7 +61,7 @@ Browsers cannot talk SMTP, and the email password must not live in the front end
 small Node server in `server/` (Express + Nodemailer). `ng serve` proxies `/api` to it (`proxy.conf.json`).
 
 - It listens on `127.0.0.1` only, so the credentials are not reachable from the network.
-- Settings, templates and variables are stored as JSON in `server/data/` (git-ignored). The settings
+- Settings, templates, variables and the send history are stored as JSON in `server/data/` (git-ignored). The settings
   file is written with `0600` permissions and the password is never sent back to the browser.
 - For Gmail, enable 2-step verification and create an **app password**; use it instead of your normal
   password.
@@ -70,7 +73,7 @@ by HTTP referrer in the Google Cloud Console. Do not commit real keys.
 
 ```
 src/app/
-  app.routes.ts  # "/" landing, "/search" lead finder, "/templates", "/settings" (lazy-loaded)
+  app.routes.ts  # "/" landing, "/search", "/templates", "/history", "/settings" (lazy-loaded)
   components/<name>/<name>.component.{ts,html,scss}   # one folder per component
   models/        # Lead, search criteria, filters, email types (shared with server/)
   services/      # search state, geocoding, translations
@@ -78,7 +81,7 @@ src/app/
   pipes/         # translate pipe
   utils/         # pure helpers (filtering, phones, CSV, template rendering)
 public/i18n/     # translation files, same keys in every language
-server/          # email API: settings, templates, variables, sending (test mode enforced here)
+server/          # email API: settings, templates, variables, sending, history (test mode enforced here)
 ```
 
 ## Notes

@@ -17,6 +17,7 @@ import { Lead } from '../../models/lead.model';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { EmailApiService, apiErrorDetail, apiErrorKey } from '../../services/email-api.service';
 import { EmailConfigService } from '../../services/email-config.service';
+import { EmailHistoryService } from '../../services/email-history.service';
 import { renderEmail } from '../../utils/template.utils';
 import { IconComponent } from '../icon/icon.component';
 import { LoaderComponent } from '../loader/loader.component';
@@ -40,6 +41,7 @@ type Phase = 'compose' | 'sending' | 'done';
 export class EmailComposerComponent {
   private readonly api = inject(EmailApiService);
   protected readonly config = inject(EmailConfigService);
+  private readonly history = inject(EmailHistoryService);
 
   readonly leads = input.required<Lead[]>();
   /** Searched locality, used by the {{localidade}}-style variables. */
@@ -69,10 +71,31 @@ export class EmailComposerComponent {
     );
   });
 
-  /** In live mode, leads without an email address cannot be contacted. */
-  protected readonly sendable = computed(() =>
-    this.testMode() ? this.emails() : this.emails().filter((email) => !!email.lead.email),
+  /** Selected leads that already received a real email (from the send history). */
+  protected readonly alreadyContacted = computed(
+    () => this.emails().filter((email) => this.history.isContacted(email.lead)).length,
   );
+  /** Live mode skips already-contacted leads unless the user unticks this. */
+  protected readonly skipContacted = signal(true);
+
+  /** In live mode, leads without an email address (or already contacted) are left out. */
+  protected readonly sendable = computed(() => {
+    if (this.testMode()) return this.emails();
+    return this.emails().filter(
+      (email) =>
+        !!email.lead.email && !(this.skipContacted() && this.history.isContacted(email.lead)),
+    );
+  });
+  /** Why the previewed email will not be sent (live mode only), or null. */
+  protected readonly previewSkipReason = computed(() => {
+    const email = this.preview();
+    if (!email || this.testMode()) return null;
+    if (!email.lead.email) return 'EMAIL.STATUS_SKIPPED';
+    if (this.skipContacted() && this.history.isContacted(email.lead))
+      return 'HISTORY.SKIPPED_CONTACTED';
+    return null;
+  });
+
   protected readonly withoutEmail = computed(
     () => this.emails().filter((email) => !email.lead.email).length,
   );
@@ -114,6 +137,7 @@ export class EmailComposerComponent {
 
   constructor() {
     void this.config.load();
+    void this.history.load();
     // Stop the loop if the dialog is destroyed mid-batch.
     inject(DestroyRef).onDestroy(() => (this.stopRequested = true));
   }
@@ -150,9 +174,12 @@ export class EmailComposerComponent {
         const result = await firstValueFrom(
           this.api.send({
             leadId: email.lead.id,
+            leadName: email.lead.name,
             to: email.lead.email,
             subject: email.subject,
             text: email.body,
+            templateId: this.template()?.id,
+            templateName: this.template()?.name,
           }),
         );
         this.results.update((results) => [...results, result]);
@@ -166,5 +193,7 @@ export class EmailComposerComponent {
         await new Promise((r) => setTimeout(r, DELAY_BETWEEN_EMAILS_MS));
     }
     this.phase.set('done');
+    // Refresh the "contacted" marks in the results table.
+    void this.history.load(true);
   }
 }

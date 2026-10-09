@@ -4,6 +4,7 @@ import type { AddressInfo } from 'node:net';
 import type { Server } from 'node:http';
 import { createApp } from './app.ts';
 import { DEFAULT_SETTINGS, DEFAULT_TEMPLATES, DEFAULT_VARIABLES } from './defaults.ts';
+import type { HistoryEntry } from '../src/app/models/email.model.ts';
 import type { StoredSettings, TransportFactory } from './mailer.ts';
 import { memoryStore } from './store.ts';
 
@@ -22,11 +23,17 @@ describe('email API', () => {
   let base: string;
   let sent: { to: string; subject: string; text: string }[];
   let settings: ReturnType<typeof memoryStore<StoredSettings>>;
+  const history = memoryStore<HistoryEntry[]>([]);
+  let failNext = false;
 
   // Fake SMTP transport that records messages instead of sending them.
   const transport: TransportFactory = () =>
     ({
       sendMail: async (mail: { to: string; subject: string; text: string }) => {
+        if (failNext) {
+          failNext = false;
+          throw new Error('550 mailbox unavailable');
+        }
         sent.push(mail);
         return {} as never;
       },
@@ -39,6 +46,7 @@ describe('email API', () => {
       settings,
       templates: memoryStore(DEFAULT_TEMPLATES),
       variables: memoryStore(DEFAULT_VARIABLES),
+      history,
       transport,
     });
     server = app.listen(0);
@@ -51,6 +59,7 @@ describe('email API', () => {
   beforeEach(async () => {
     sent = [];
     await settings.write(configured);
+    await history.write([]);
   });
 
   const call = (path: string, method = 'GET', body?: unknown) =>
@@ -149,5 +158,58 @@ describe('email API', () => {
       ).status,
       400,
     );
+  });
+
+  it('logs test and live sends (and failures) in the history, newest first', async () => {
+    const message = {
+      leadId: 'osm:node/1',
+      leadName: 'Padaria Central',
+      to: 'geral@padaria.pt',
+      subject: 'Olá',
+      text: 'T',
+      templateId: 'website-intro',
+      templateName: 'Apresentação',
+    };
+    await call('/api/email/send', 'POST', message);
+    await settings.write({ ...configured, testMode: false });
+    await call('/api/email/send', 'POST', message);
+    failNext = true;
+    await call('/api/email/send', 'POST', { ...message, leadId: 'osm:node/2', to: 'x@y.pt' });
+
+    const entries: HistoryEntry[] = await (await call('/api/history')).json();
+    assert.equal(entries.length, 3);
+    const [failed, live, test] = entries;
+    assert.equal(test.testMode, true);
+    assert.equal(test.to, 'tests@example.com');
+    assert.equal(test.leadEmail, 'geral@padaria.pt');
+    assert.equal(live.testMode, false);
+    assert.equal(live.to, 'geral@padaria.pt');
+    assert.equal(live.templateName, 'Apresentação');
+    assert.equal(failed.status, 'failed');
+    assert.match(failed.error ?? '', /550/);
+  });
+
+  it('does not log skipped leads (live mode without email)', async () => {
+    await settings.write({ ...configured, testMode: false });
+    await call('/api/email/send', 'POST', { leadId: 'b', to: null, subject: 'S', text: 'T' });
+    assert.equal((await history.read()).length, 0);
+  });
+
+  it('deletes one entry or clears only the test entries', async () => {
+    await call('/api/email/send', 'POST', { leadId: 'a', to: 'a@b.pt', subject: 'S', text: 'T' });
+    await settings.write({ ...configured, testMode: false });
+    await call('/api/email/send', 'POST', { leadId: 'a', to: 'a@b.pt', subject: 'S', text: 'T' });
+    await call('/api/email/send', 'POST', { leadId: 'c', to: 'c@b.pt', subject: 'S', text: 'T' });
+
+    assert.equal((await call('/api/history?testOnly=true', 'DELETE')).status, 204);
+    let entries: HistoryEntry[] = await (await call('/api/history')).json();
+    assert.deepEqual(
+      entries.map((entry) => entry.testMode),
+      [false, false],
+    );
+
+    await call(`/api/history/${entries[0].id}`, 'DELETE');
+    entries = await (await call('/api/history')).json();
+    assert.equal(entries.length, 1);
   });
 });

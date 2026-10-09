@@ -47,8 +47,52 @@
         (filtersChange)="onFiltersChange($event)"
         (reset)="store.resetFilters()"
       />
-      <app-lead-table [leads]="store.filteredLeads()" [locality]="store.criteria()!.locality" />
+      <app-lead-table
+        [leads]="store.filteredLeads()"
+        [locality]="store.criteria()!.locality"
+        [selectedIds]="store.selectedIds()"
+        (toggle)="store.toggleSelection($event)"
+        (toggleAll)="store.setSelection($event.ids, $event.selected)"
+      />
     </div>
+
+    <!-- Bulk actions for the ticked leads -->
+    @if (store.selectedLeads().length; as count) {
+      <div class="selection-bar" role="region" [attr.aria-label]="'EMAIL.SELECTION' | translate">
+        <span class="selection-bar__count">
+          <strong>{{ 'EMAIL.SELECTED' | translate: { count } }}</strong>
+          <small>{{
+            'EMAIL.SELECTED_WITH_EMAIL' | translate: { count: selectedWithEmail() }
+          }}</small>
+        </span>
+        <button
+          type="button"
+          class="button button--ghost selection-bar__clear"
+          (click)="store.clearSelection()"
+        >
+          {{ 'EMAIL.CLEAR_SELECTION' | translate }}
+        </button>
+        <button type="button" class="button button--primary" (click)="composerOpen.set(true)">
+          <app-icon name="mail" [size]="16" /> {{ 'EMAIL.SEND_EMAIL' | translate }}
+        </button>
+      </div>
+    }
+
+    <app-modal
+      [open]="composerOpen()"
+      size="large"
+      title="EMAIL.COMPOSE_TITLE"
+      (closed)="composerOpen.set(false)"
+    >
+      <!-- Only rendered while open so each opening starts a fresh composer -->
+      @if (composerOpen()) {
+        <app-email-composer
+          [leads]="store.selectedLeads()"
+          [locality]="store.criteria()!.locality"
+          (finished)="composerOpen.set(false)"
+        />
+      }
+    </app-modal>
   } @else if (!store.criteria()) {
     <div class="empty card">
       <span class="empty__icon"><app-icon name="globe" [size]="28" /></span>

@@ -1,0 +1,190 @@
+<div class="container page">
+  <header class="page__intro">
+    <span class="eyebrow"
+      ><app-icon name="fileText" [size]="14" /> {{ 'TEMPLATES.EYEBROW' | translate }}</span
+    >
+    <h1>{{ 'TEMPLATES.TITLE' | translate }}</h1>
+    <p>{{ 'TEMPLATES.SUBTITLE' | translate }}</p>
+  </header>
+
+  @if (config.loadErrorKey(); as loadError) {
+    <div class="alert" role="alert">
+      <app-icon name="alert" [size]="20" />
+      <span>{{ loadError | translate }}</span>
+      <button type="button" class="button" (click)="config.load(true)">
+        {{ 'COMMON.RETRY' | translate }}
+      </button>
+    </div>
+  } @else if (!config.settings()) {
+    <app-loader class="card" size="large" message="COMMON.LOADING" />
+  } @else {
+    <div class="editor">
+      <!-- List -->
+      <aside class="card list">
+        <div class="list__header">
+          <h2>{{ 'TEMPLATES.LIST' | translate }}</h2>
+          <button type="button" class="button" (click)="create()">
+            <app-icon name="plus" [size]="16" /> {{ 'TEMPLATES.NEW' | translate }}
+          </button>
+        </div>
+        <ul>
+          @for (template of drafts(); track template.id) {
+            <li>
+              <button
+                type="button"
+                class="list__item"
+                [class.list__item--active]="template.id === selectedId()"
+                (click)="selectedId.set(template.id)"
+              >
+                <app-icon name="mail" [size]="16" />
+                <span>{{ template.name || ('TEMPLATES.UNTITLED' | translate) }}</span>
+              </button>
+            </li>
+          } @empty {
+            <li class="list__empty">{{ 'TEMPLATES.EMPTY' | translate }}</li>
+          }
+        </ul>
+        <button type="button" class="button variables-button" (click)="variablesOpen.set(true)">
+          <app-icon name="braces" [size]="16" /> {{ 'TEMPLATES.MANAGE_VARIABLES' | translate }}
+        </button>
+      </aside>
+
+      @if (selected(); as template) {
+        <!-- Editor -->
+        <section class="card form">
+          <div class="form__toolbar">
+            <label class="field form__name">
+              <span class="field__label">{{ 'TEMPLATES.NAME' | translate }}</span>
+              <input
+                class="field__control"
+                [ngModel]="template.name"
+                (ngModelChange)="update({ name: $event })"
+              />
+            </label>
+            <button
+              type="button"
+              class="button"
+              [title]="'TEMPLATES.DUPLICATE' | translate"
+              (click)="create(template)"
+            >
+              <app-icon name="copy" [size]="16" />
+            </button>
+            <button
+              type="button"
+              class="button form__delete"
+              [title]="'COMMON.REMOVE' | translate"
+              (click)="remove()"
+            >
+              <app-icon name="trash" [size]="16" />
+            </button>
+          </div>
+
+          <div class="chips">
+            <span class="field__label">{{ 'TEMPLATES.INSERT_VARIABLE' | translate }}</span>
+            <div class="chips__list">
+              @for (variable of config.variables(); track variable.key) {
+                <button
+                  type="button"
+                  class="chip chips__chip"
+                  [title]="placeholder(variable.key)"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="insert(variable.key)"
+                >
+                  {{ variable.label }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <label class="field">
+            <span class="field__label">{{ 'EMAIL.SUBJECT' | translate }}</span>
+            <input
+              #subjectInput
+              class="field__control"
+              [ngModel]="template.subject"
+              (ngModelChange)="update({ subject: $event })"
+              (focus)="rememberField('subject')"
+            />
+          </label>
+
+          <label class="field">
+            <span class="field__label">{{ 'TEMPLATES.BODY' | translate }}</span>
+            <textarea
+              #bodyInput
+              class="field__control form__body"
+              rows="14"
+              [ngModel]="template.body"
+              (ngModelChange)="update({ body: $event })"
+              (focus)="rememberField('body')"
+            ></textarea>
+          </label>
+
+          @if (unknownKeys().length) {
+            <p class="warning">
+              <app-icon name="alert" [size]="16" />
+              {{ 'EMAIL.UNKNOWN_KEYS' | translate }}
+              @for (key of unknownKeys(); track key) {
+                <code>{{ placeholder(key) }}</code>
+              }
+            </p>
+          }
+
+          <div class="form__actions">
+            @if (errorKey(); as error) {
+              <span class="form__error">{{ error | translate }}</span>
+            } @else if (dirty()) {
+              <span class="pill pill--warning">{{ 'TEMPLATES.UNSAVED' | translate }}</span>
+            } @else if (savedAt()) {
+              <span class="pill pill--success"
+                ><app-icon name="check" [size]="12" /> {{ 'TEMPLATES.SAVED' | translate }}</span
+              >
+            }
+            <button type="button" class="button" [disabled]="!dirty()" (click)="discard()">
+              {{ 'TEMPLATES.DISCARD' | translate }}
+            </button>
+            <button
+              type="button"
+              class="button button--primary"
+              [disabled]="!dirty() || saving()"
+              (click)="save()"
+            >
+              {{ 'COMMON.SAVE' | translate }}
+            </button>
+          </div>
+        </section>
+
+        <!-- Live preview -->
+        @if (preview(); as email) {
+          <section class="card preview">
+            <h2><app-icon name="mail" [size]="16" /> {{ 'TEMPLATES.PREVIEW' | translate }}</h2>
+            <p class="preview__for">
+              {{ 'TEMPLATES.PREVIEW_FOR' | translate: { name: email.lead.name } }}
+            </p>
+            <div class="preview__subject">{{ email.subject }}</div>
+            <pre class="preview__body">{{ email.body }}</pre>
+            @if (email.empty.length) {
+              <p class="preview__empty">
+                {{ 'EMAIL.EMPTY_KEYS' | translate }} {{ email.empty.join(', ') }}
+              </p>
+            }
+          </section>
+        }
+      } @else {
+        <section class="card form form--empty">
+          <p>{{ 'TEMPLATES.EMPTY' | translate }}</p>
+        </section>
+      }
+    </div>
+  }
+</div>
+
+<app-modal
+  [open]="variablesOpen()"
+  size="large"
+  title="VARIABLES.TITLE"
+  (closed)="variablesOpen.set(false)"
+>
+  @if (variablesOpen()) {
+    <app-template-variables (finished)="variablesOpen.set(false)" />
+  }
+</app-modal>

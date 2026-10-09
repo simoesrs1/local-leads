@@ -1,15 +1,17 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { LeadFilters } from '../../models/filter.model';
 import { SearchCriteria } from '../../models/search.model';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { LeadSearchService } from '../../services/lead-search.service';
 import { criteriaFromParams } from '../../utils/search-params.utils';
+import { EmailComposerComponent } from '../email-composer/email-composer.component';
 import { IconComponent } from '../icon/icon.component';
 import { LeadFiltersComponent } from '../lead-filters/lead-filters.component';
 import { LeadStatsComponent } from '../lead-stats/lead-stats.component';
 import { LeadTableComponent } from '../lead-table/lead-table.component';
 import { LoaderComponent } from '../loader/loader.component';
+import { ModalComponent } from '../modal/modal.component';
 import { SearchBarComponent } from '../search-bar/search-bar.component';
 
 /** Page container: wires the presentational components to LeadSearchService. */
@@ -21,6 +23,8 @@ import { SearchBarComponent } from '../search-bar/search-bar.component';
     LeadStatsComponent,
     LeadTableComponent,
     LoaderComponent,
+    ModalComponent,
+    EmailComposerComponent,
     IconComponent,
     TranslatePipe,
   ],
@@ -31,6 +35,11 @@ import { SearchBarComponent } from '../search-bar/search-bar.component';
 export class LeadFinderComponent {
   protected readonly store = inject(LeadSearchService);
   private readonly route = inject(ActivatedRoute);
+
+  protected readonly composerOpen = signal(false);
+  protected readonly selectedWithEmail = computed(
+    () => this.store.selectedLeads().filter((lead) => !!lead.email).length,
+  );
 
   constructor() {
     // A link like /search?locality=...&lat=...&lon=... (e.g. from the home page) starts the search directly.

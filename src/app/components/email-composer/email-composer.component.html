@@ -1,0 +1,214 @@
+@if (config.loadErrorKey(); as loadError) {
+  <div class="notice notice--danger" role="alert">
+    <app-icon name="alert" [size]="18" />
+    <span>{{ loadError | translate }}</span>
+  </div>
+} @else if (!config.settings()) {
+  <app-loader message="COMMON.LOADING" />
+} @else {
+  <!-- Test mode is the safe default; live mode is shown as a warning -->
+  @if (testMode()) {
+    <div class="notice notice--warning">
+      <app-icon name="flask" [size]="18" />
+      <span>
+        <strong>{{ 'EMAIL.TEST_MODE_ON' | translate }}</strong>
+        {{ 'EMAIL.TEST_MODE_HINT' | translate: { email: testAddress() } }}
+      </span>
+    </div>
+  } @else {
+    <div class="notice notice--danger">
+      <app-icon name="send" [size]="18" />
+      <span>
+        <strong>{{ 'EMAIL.LIVE_MODE_ON' | translate }}</strong>
+        {{ 'EMAIL.LIVE_MODE_HINT' | translate }}
+      </span>
+    </div>
+  }
+
+  @if (!smtpReady()) {
+    <div class="notice notice--danger">
+      <app-icon name="settings" [size]="18" />
+      <span>
+        {{ 'EMAIL.SMTP_MISSING' | translate }}
+        <a routerLink="/settings" (click)="finished.emit()">{{ 'NAV.SETTINGS' | translate }}</a>
+      </span>
+    </div>
+  }
+
+  @if (phase() === 'compose') {
+    <div class="composer__row">
+      <label class="field composer__template">
+        <span class="field__label">{{ 'EMAIL.TEMPLATE' | translate }}</span>
+        <select
+          class="field__control"
+          [ngModel]="templateId()"
+          (ngModelChange)="templateId.set($event)"
+        >
+          @for (template of config.templates(); track template.id) {
+            <option [value]="template.id">{{ template.name }}</option>
+          }
+        </select>
+      </label>
+      <a class="button" routerLink="/templates" (click)="finished.emit()">
+        <app-icon name="fileText" [size]="16" /> {{ 'EMAIL.EDIT_TEMPLATES' | translate }}
+      </a>
+    </div>
+
+    <p class="composer__summary">
+      {{ 'EMAIL.RECIPIENTS' | translate: { count: sendable().length } }}
+      @if (!testMode() && withoutEmail()) {
+        <span class="pill pill--warning">
+          {{ 'EMAIL.SKIPPED_NO_EMAIL' | translate: { count: withoutEmail() } }}
+        </span>
+      }
+    </p>
+
+    @if (unknownKeys().length) {
+      <div class="notice notice--warning">
+        <app-icon name="braces" [size]="18" />
+        <span>
+          {{ 'EMAIL.UNKNOWN_KEYS' | translate }}
+          @for (key of unknownKeys(); track key) {
+            <code>{{ placeholder(key) }}</code>
+          }
+        </span>
+      </div>
+    }
+
+    @if (preview(); as email) {
+      <article class="preview">
+        <header class="preview__header">
+          <button
+            type="button"
+            class="preview__nav"
+            [disabled]="emails().length < 2"
+            (click)="movePreview(-1)"
+          >
+            <app-icon name="chevronLeft" [size]="18" />
+          </button>
+          <div class="preview__recipient">
+            <strong>{{ email.lead.name }}</strong>
+            <span>
+              @if (testMode()) {
+                {{ testAddress() }} · {{ 'EMAIL.ORIGINAL' | translate }}:
+                {{ email.lead.email || '—' }}
+              } @else {
+                {{ email.lead.email || ('RESULTS.NO_EMAIL' | translate) }}
+              }
+            </span>
+          </div>
+          <span class="preview__counter">{{ previewIndex() + 1 }} / {{ emails().length }}</span>
+          <button
+            type="button"
+            class="preview__nav"
+            [disabled]="emails().length < 2"
+            (click)="movePreview(1)"
+          >
+            <app-icon name="chevronRight" [size]="18" />
+          </button>
+        </header>
+        <div class="preview__subject">
+          <span>{{ 'EMAIL.SUBJECT' | translate }}</span>
+          {{ testMode() ? '[TESTE] ' : '' }}{{ email.subject }}
+        </div>
+        <pre class="preview__body">{{ email.body }}</pre>
+        @if (email.empty.length) {
+          <footer class="preview__warning">
+            <app-icon name="alert" [size]="14" />
+            {{ 'EMAIL.EMPTY_KEYS' | translate }} {{ email.empty.join(', ') }}
+          </footer>
+        }
+      </article>
+    }
+
+    @if (!testMode()) {
+      <label class="composer__confirm">
+        <input
+          type="checkbox"
+          [ngModel]="confirmLive()"
+          (ngModelChange)="confirmLive.set($event)"
+        />
+        {{ 'EMAIL.CONFIRM_LIVE' | translate: { count: sendable().length } }}
+      </label>
+    }
+  } @else {
+    <!-- Sending / done -->
+    <div class="progress">
+      <div class="progress__bar">
+        <span [style.width.%]="(results().length / sendable().length) * 100"></span>
+      </div>
+      <p>
+        {{ 'EMAIL.PROGRESS' | translate: { done: results().length, total: sendable().length } }}
+        · {{ 'EMAIL.SENT_COUNT' | translate: { count: counts().sent } }}
+        @if (counts().failed) {
+          ·
+          <span class="text-danger">{{
+            'EMAIL.FAILED_COUNT' | translate: { count: counts().failed }
+          }}</span>
+        }
+      </p>
+    </div>
+
+    @if (errorKey(); as error) {
+      <div class="notice notice--danger" role="alert">
+        <app-icon name="alert" [size]="18" />
+        <span>
+          {{ error | translate }}
+          @if (errorDetail()) {
+            <small>{{ errorDetail() }}</small>
+          }
+        </span>
+      </div>
+    }
+
+    <ul class="results">
+      @for (result of results(); track result.leadId) {
+        <li class="results__item">
+          @switch (result.status) {
+            @case ('sent') {
+              <span class="pill pill--success"
+                ><app-icon name="check" [size]="12" /> {{ 'EMAIL.STATUS_SENT' | translate }}</span
+              >
+            }
+            @case ('skipped') {
+              <span class="pill pill--warning">{{ 'EMAIL.STATUS_SKIPPED' | translate }}</span>
+            }
+            @default {
+              <span class="pill pill--danger">{{ 'EMAIL.STATUS_FAILED' | translate }}</span>
+            }
+          }
+          <strong>{{ leadName(result.leadId) }}</strong>
+          <span class="results__to">→ {{ result.to || '—' }}</span>
+          @if (result.error) {
+            <small class="results__error">{{ result.error | translate }}</small>
+          }
+        </li>
+      }
+    </ul>
+  }
+}
+
+<div class="composer__actions">
+  @switch (phase()) {
+    @case ('compose') {
+      <button type="button" class="button" (click)="finished.emit()">
+        {{ 'COMMON.CANCEL' | translate }}
+      </button>
+      <button type="button" class="button button--primary" [disabled]="!canSend()" (click)="send()">
+        <app-icon name="send" [size]="16" />
+        {{
+          (testMode() ? 'EMAIL.SEND_TEST' : 'EMAIL.SEND') | translate: { count: sendable().length }
+        }}
+      </button>
+    }
+    @case ('sending') {
+      <app-loader size="small" message="EMAIL.SENDING" />
+      <button type="button" class="button" (click)="stop()">{{ 'EMAIL.STOP' | translate }}</button>
+    }
+    @default {
+      <button type="button" class="button button--primary" (click)="finished.emit()">
+        {{ 'COMMON.CLOSE' | translate }}
+      </button>
+    }
+  }
+</div>

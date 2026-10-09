@@ -1,0 +1,86 @@
+/**
+ * Email types shared by the Angular app and the Node server (server/ imports this file),
+ * so both sides always agree on the API contract.
+ */
+
+/** SMTP account used to send emails. */
+export interface SmtpSettings {
+  host: string;
+  port: number;
+  /** true = TLS from the start (port 465); false = STARTTLS when available (port 587). */
+  secure: boolean;
+  user: string;
+  fromName: string;
+  fromEmail: string;
+}
+
+/** Settings as returned to the browser: the password never leaves the server. */
+export interface EmailSettings extends SmtpSettings {
+  hasPassword: boolean;
+  /** When true, every email goes to `testEmail` instead of the business. */
+  testMode: boolean;
+  testEmail: string;
+}
+
+/** Settings sent by the browser. An empty/missing `password` keeps the stored one. */
+export interface EmailSettingsUpdate extends SmtpSettings {
+  password?: string;
+  testMode: boolean;
+  testEmail: string;
+}
+
+/** Lead data a template variable can be bound to. */
+export const LEAD_FIELDS = [
+  'name',
+  'type',
+  'email',
+  'phone',
+  'website',
+  'address',
+  'locality',
+] as const;
+export type LeadField = (typeof LEAD_FIELDS)[number];
+
+/**
+ * A template key. `label` "Nome Cliente" becomes the placeholder {{nome_cliente}} (`key`)
+ * and is replaced by the bound lead field, or by the fixed `value` when source is "custom".
+ */
+export interface TemplateVariable {
+  label: string;
+  key: string;
+  source: LeadField | 'custom';
+  value: string;
+}
+
+export interface EmailTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  body: string;
+  updatedAt: string;
+}
+
+/** One already-rendered email; the server only decides the final recipient (test mode). */
+export interface SendEmailRequest {
+  leadId: string;
+  to: string | null;
+  subject: string;
+  text: string;
+}
+
+export type SendStatus = 'sent' | 'skipped' | 'failed';
+
+export interface SendEmailResult {
+  leadId: string;
+  status: SendStatus;
+  /** Address the email was actually sent to (the test address in test mode). */
+  to: string | null;
+  testMode: boolean;
+  error?: string;
+}
+
+/** Error body returned by the server: a translation key plus optional technical detail. */
+export interface ApiError {
+  error: string;
+  detail?: string;
+}

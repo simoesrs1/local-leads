@@ -11,5 +11,15 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./components/lead-finder/lead-finder.component').then((m) => m.LeadFinderComponent),
   },
+  {
+    path: 'templates',
+    loadComponent: () =>
+      import('./components/templates/templates.component').then((m) => m.TemplatesComponent),
+  },
+  {
+    path: 'settings',
+    loadComponent: () =>
+      import('./components/settings/settings.component').then((m) => m.SettingsComponent),
+  },
   { path: '**', redirectTo: '' },
 ];

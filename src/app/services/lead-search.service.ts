@@ -31,6 +31,13 @@ export class LeadSearchService {
 
   readonly filteredLeads = computed(() => filterLeads(this._leads(), this.filters()));
 
+  /** Ids of the leads ticked in the results table (for bulk email). */
+  readonly selectedIds = signal<ReadonlySet<string>>(new Set());
+  readonly selectedLeads = computed(() => {
+    const selected = this.selectedIds();
+    return this._leads().filter((lead) => selected.has(lead.id));
+  });
+
   /** Distinct business types in the current results, for the type filter dropdown. */
   readonly types = computed(() =>
     [...new Set(this._leads().map((lead) => lead.type))].sort((a, b) => a.localeCompare(b)),
@@ -70,6 +77,7 @@ export class LeadSearchService {
     this._leads.set([]);
     this._location.set(null);
     this.filters.set({ ...DEFAULT_FILTERS });
+    this.clearSelection();
 
     // Coordinates from geolocation are exact, so only free text needs geocoding.
     const location$: Observable<GeoLocation> = criteria.center
@@ -105,6 +113,30 @@ export class LeadSearchService {
 
   resetFilters(): void {
     this.filters.set({ ...DEFAULT_FILTERS });
+  }
+
+  toggleSelection(id: string): void {
+    this.selectedIds.update((selected) => {
+      const next = new Set(selected);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  }
+
+  /** Selects or unselects many leads at once (e.g. the "select all" checkbox). */
+  setSelection(ids: string[], selected: boolean): void {
+    this.selectedIds.update((current) => {
+      const next = new Set(current);
+      for (const id of ids) {
+        if (selected) next.add(id);
+        else next.delete(id);
+      }
+      return next;
+    });
+  }
+
+  clearSelection(): void {
+    this.selectedIds.set(new Set());
   }
 }
 

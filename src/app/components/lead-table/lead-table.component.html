@@ -14,6 +14,15 @@
       <table class="results__table">
         <thead>
           <tr>
+            <th class="results__check">
+              <input
+                type="checkbox"
+                [checked]="visibleSelected() > 0 && visibleSelected() === leads().length"
+                [indeterminate]="visibleSelected() > 0 && visibleSelected() < leads().length"
+                [attr.aria-label]="'RESULTS.SELECT_ALL' | translate"
+                (change)="onToggleAll()"
+              />
+            </th>
             <th>{{ 'RESULTS.NAME' | translate }}</th>
             <th>{{ 'RESULTS.PHONE' | translate }}</th>
             <th>{{ 'RESULTS.EMAIL' | translate }}</th>
@@ -26,7 +35,15 @@
         </thead>
         <tbody>
           @for (lead of leads(); track lead.id) {
-            <tr>
+            <tr [class.is-selected]="selectedIds().has(lead.id)">
+              <td class="results__check">
+                <input
+                  type="checkbox"
+                  [checked]="selectedIds().has(lead.id)"
+                  [attr.aria-label]="('RESULTS.SELECT' | translate) + ': ' + lead.name"
+                  (change)="toggle.emit(lead.id)"
+                />
+              </td>
               <td>
                 <div class="results__business">
                   <span class="results__avatar" [style.--hue]="avatarHue(lead.name)">

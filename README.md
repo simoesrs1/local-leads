@@ -12,9 +12,9 @@ The filters are built around outreach: they let you quickly spot businesses **wi
 a mobile number**, **without email**, **without a website** or **without any contact data at all** — the
 ones most likely to need help with their online presence.
 
-The long-term goal is to automate the outreach itself: select leads and send them emails built from
-reusable templates to promote freelancing services. **This first version focuses on search and filtering;
-email sending and templates are planned for a later phase.**
+It also automates the outreach itself: select leads in the results grid and send them personalised emails
+built from reusable templates to promote your freelancing services, with a **test mode** that redirects
+every email to your own inbox so you can check everything first.
 
 ## Features
 
@@ -29,6 +29,14 @@ email sending and templates are planned for a later phase.**
   "without any contact data".
 - Summary tiles that double as filter shortcuts.
 - CSV export of the filtered leads.
+- **Bulk email with templates**:
+  - multi-select leads in the results grid and send them all one email each, with progress and a stop button;
+  - templates with placeholders such as `{{nome_cliente}}`, edited with a live preview;
+  - a variables window where each label ("Nome Cliente" → `{{nome_cliente}}`) is bound to a lead field
+    (name, type, email, phone, website, address, searched locality) or to a fixed text;
+  - settings page for the SMTP account (presets for Gmail / Microsoft 365, connection test);
+  - **test mode** (on by default): every email goes to your own address with a `[TESTE]` subject.
+    It is enforced by the server, so the browser cannot bypass it.
 - Reusable `<app-loader>` spinner (inline, block or overlay) for any list that loads data.
 - English and Portuguese UI (`public/i18n/en.json`, `public/i18n/pt.json`).
 
@@ -36,10 +44,24 @@ email sending and templates are planned for a later phase.**
 
 ```bash
 npm ci
-npm start        # http://localhost:4200
-npm test         # unit tests (Vitest)
-npm run build    # production build in dist/
+npm run dev           # email server (port 3000) + Angular app on http://localhost:4200
+npm start             # Angular app only (search works, email features need the server)
+npm run server        # email server only
+npm test              # Angular unit tests (Vitest)
+npm run test:server   # email server tests (node:test)
+npm run build         # production build in dist/
 ```
+
+### Email server
+
+Browsers cannot talk SMTP, and the email password must not live in the front end, so emails are sent by a
+small Node server in `server/` (Express + Nodemailer). `ng serve` proxies `/api` to it (`proxy.conf.json`).
+
+- It listens on `127.0.0.1` only, so the credentials are not reachable from the network.
+- Settings, templates and variables are stored as JSON in `server/data/` (git-ignored). The settings
+  file is written with `0600` permissions and the password is never sent back to the browser.
+- For Gmail, enable 2-step verification and create an **app password**; use it instead of your normal
+  password.
 
 To enable Google Places, set `googlePlacesApiKey` in `src/environments/environment.ts` and restrict the key
 by HTTP referrer in the Google Cloud Console. Do not commit real keys.
@@ -48,18 +70,20 @@ by HTTP referrer in the Google Cloud Console. Do not commit real keys.
 
 ```
 src/app/
-  app.routes.ts  # "/" landing page, "/search" lead finder (both lazy-loaded)
+  app.routes.ts  # "/" landing, "/search" lead finder, "/templates", "/settings" (lazy-loaded)
   components/<name>/<name>.component.{ts,html,scss}   # one folder per component
-  models/        # Lead, search criteria, filters
+  models/        # Lead, search criteria, filters, email types (shared with server/)
   services/      # search state, geocoding, translations
     providers/   # data sources (OpenStreetMap, Google Places) behind a common interface
   pipes/         # translate pipe
-  utils/         # pure helpers (filtering, phones, CSV)
+  utils/         # pure helpers (filtering, phones, CSV, template rendering)
 public/i18n/     # translation files, same keys in every language
+server/          # email API: settings, templates, variables, sending (test mode enforced here)
 ```
 
 ## Notes
 
 - Data completeness depends on the source. OpenStreetMap often lacks phones/emails for small businesses;
   Google Places has better phone/website coverage but no emails.
-- Respect each provider's usage policy and GDPR when contacting businesses.
+- Respect each provider's usage policy and GDPR when contacting businesses: keep an opt-out line in your
+  templates (the default one has it) and send in small batches — the app waits 1.5 s between emails.

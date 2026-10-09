@@ -1,0 +1,107 @@
+<p class="intro">{{ 'VARIABLES.INTRO' | translate }}</p>
+
+<div class="variables">
+  <div class="variables__head">
+    <span>{{ 'VARIABLES.LABEL' | translate }}</span>
+    <span>{{ 'VARIABLES.KEY' | translate }}</span>
+    <span>{{ 'VARIABLES.SOURCE' | translate }}</span>
+    <span></span>
+  </div>
+
+  @for (row of rows(); track row.rowId) {
+    <div class="variables__row">
+      <input
+        class="field__control"
+        [class.is-invalid]="errors().get(row.rowId) === 'VARIABLES.ERROR_LABEL'"
+        [placeholder]="'VARIABLES.LABEL_PLACEHOLDER' | translate"
+        [value]="row.label"
+        (input)="update(row.rowId, { label: inputValue($event) })"
+        [attr.aria-label]="'VARIABLES.LABEL' | translate"
+      />
+      <div class="variables__key">
+        <span>{{ '{' }}{{ '{' }}</span>
+        <input
+          class="field__control"
+          [class.is-invalid]="
+            errors().get(row.rowId) === 'VARIABLES.ERROR_KEY' ||
+            errors().get(row.rowId) === 'VARIABLES.ERROR_DUPLICATE'
+          "
+          [value]="row.key"
+          (input)="update(row.rowId, { key: inputValue($event) })"
+          [attr.aria-label]="'VARIABLES.KEY' | translate"
+        />
+        <span>{{ '}' }}{{ '}' }}</span>
+      </div>
+      <div class="variables__source">
+        <select
+          class="field__control"
+          (change)="setSource(row.rowId, inputValue($event))"
+          [attr.aria-label]="'VARIABLES.SOURCE' | translate"
+        >
+          <optgroup [label]="'VARIABLES.LEAD_FIELDS' | translate">
+            @for (field of fields; track field) {
+              <option [value]="field" [selected]="row.source === field">
+                {{ 'FIELDS.' + field.toUpperCase() | translate }}
+              </option>
+            }
+          </optgroup>
+          <option value="custom" [selected]="row.source === 'custom'">
+            {{ 'VARIABLES.CUSTOM' | translate }}
+          </option>
+        </select>
+        @if (row.source === 'custom') {
+          <input
+            class="field__control"
+            [placeholder]="'VARIABLES.VALUE_PLACEHOLDER' | translate"
+            [value]="row.value"
+            (input)="update(row.rowId, { value: inputValue($event) })"
+            [attr.aria-label]="'VARIABLES.VALUE' | translate"
+          />
+        }
+      </div>
+      <button
+        type="button"
+        class="variables__remove"
+        [attr.aria-label]="'COMMON.REMOVE' | translate"
+        (click)="remove(row.rowId)"
+      >
+        <app-icon name="trash" [size]="16" />
+      </button>
+      @if (errors().get(row.rowId); as error) {
+        <small class="variables__error">{{ error | translate }}</small>
+      }
+    </div>
+  }
+</div>
+
+<button type="button" class="button add" (click)="add()">
+  <app-icon name="plus" [size]="16" /> {{ 'VARIABLES.ADD' | translate }}
+</button>
+
+@if (orphanedKeys().length) {
+  <p class="warning">
+    <app-icon name="alert" [size]="16" />
+    {{ 'VARIABLES.ORPHANED' | translate }}
+    @for (key of orphanedKeys(); track key) {
+      <code>{{ placeholder(key) }}</code>
+    }
+  </p>
+}
+
+@if (errorKey(); as error) {
+  <p class="warning warning--danger">{{ error | translate }}</p>
+}
+
+<div class="actions">
+  <button type="button" class="button" (click)="finished.emit()">
+    {{ 'COMMON.CANCEL' | translate }}
+  </button>
+  <button
+    type="button"
+    class="button button--primary"
+    [disabled]="hasErrors() || saving()"
+    (click)="save()"
+  >
+    {{ 'COMMON.SAVE' | translate }}
+  </button>
+</div>

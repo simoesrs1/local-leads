@@ -84,3 +84,46 @@
     color: var(--color-muted);
   }
 }
+
+/* Floating bar with bulk actions while leads are selected */
+.selection-bar {
+  position: sticky;
+  bottom: 1rem;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  align-self: center;
+  padding: 0.6rem 0.6rem 0.6rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-lg);
+  animation: bar-in 0.2s ease-out;
+
+  &__count {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+
+    small {
+      color: var(--color-muted);
+    }
+  }
+
+  .button {
+    border-radius: 999px;
+  }
+
+  &__clear {
+    color: var(--color-muted);
+  }
+}
+
+@keyframes bar-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}

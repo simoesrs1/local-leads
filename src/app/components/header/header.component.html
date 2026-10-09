@@ -6,17 +6,26 @@
     </a>
 
     <nav class="header__nav" [attr.aria-label]="'NAV.LABEL' | translate">
-      <a
-        class="header__link"
-        routerLink="/"
-        routerLinkActive="header__link--active"
-        [routerLinkActiveOptions]="{ exact: true }"
-        >{{ 'NAV.HOME' | translate }}</a
-      >
-      <a class="header__link" routerLink="/search" routerLinkActive="header__link--active">
-        {{ 'NAV.SEARCH' | translate }}
-      </a>
+      @for (link of links; track link.path) {
+        <a
+          class="header__link"
+          [routerLink]="link.path"
+          routerLinkActive="header__link--active"
+          [routerLinkActiveOptions]="{ exact: link.exact }"
+          [title]="link.label | translate"
+        >
+          <app-icon [name]="link.icon" [size]="16" />
+          <span class="header__link-text">{{ link.label | translate }}</span>
+        </a>
+      }
     </nav>
+
+    @if (emailConfig.settings()?.testMode) {
+      <a class="header__test" routerLink="/settings" [title]="'EMAIL.TEST_MODE_ON' | translate">
+        <app-icon name="flask" [size]="14" />
+        <span class="header__link-text">{{ 'NAV.TEST_MODE' | translate }}</span>
+      </a>
+    }
 
     <div class="header__languages" role="group" [attr.aria-label]="'APP.LANGUAGE' | translate">
       @for (language of languages; track language) {

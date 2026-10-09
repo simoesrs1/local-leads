@@ -87,7 +87,7 @@ export class HomeComponent {
     { icon: 'smartphone', key: 'HOME.FEATURE_MOBILE' },
     { icon: 'download', key: 'HOME.FEATURE_EXPORT' },
     { icon: 'languages', key: 'HOME.FEATURE_I18N' },
-    { icon: 'mail', key: 'HOME.FEATURE_EMAIL', soon: true },
+    { icon: 'mail', key: 'HOME.FEATURE_EMAIL' },
   ];
 
   constructor() {

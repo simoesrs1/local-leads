@@ -46,7 +46,7 @@
             class="field__control"
             type="email"
             name="testEmail"
-            [placeholder]="form().fromEmail || 'eu@exemplo.pt'"
+            [placeholder]="senderAddress() || 'eu@exemplo.pt'"
             [ngModel]="form().testEmail"
             (ngModelChange)="patch({ testEmail: $event })"
           />
@@ -59,134 +59,285 @@
         }
       </section>
 
-      <!-- SMTP account -->
+      <!-- Sending account -->
       <section class="card section">
         <div class="section__header">
           <span class="section__icon"><app-icon name="mail" [size]="20" /></span>
           <div>
-            <h2>{{ 'SETTINGS.SMTP_TITLE' | translate }}</h2>
-            <p>{{ 'SETTINGS.SMTP_TEXT' | translate }}</p>
+            <h2>{{ 'SETTINGS.ACCOUNT_TITLE' | translate }}</h2>
+            <p>{{ 'SETTINGS.ACCOUNT_TEXT' | translate }}</p>
           </div>
         </div>
 
-        <div class="presets">
-          <span class="field__label">{{ 'SETTINGS.PRESETS' | translate }}</span>
-          @for (preset of presets; track preset.key) {
+        <div
+          class="providers"
+          role="radiogroup"
+          [attr.aria-label]="'SETTINGS.ACCOUNT_TITLE' | translate"
+        >
+          @for (provider of providers; track provider) {
             <button
               type="button"
-              class="chip"
-              [class.chip--active]="form().host === preset.host"
-              (click)="applyPreset(preset)"
+              role="radio"
+              class="providers__option"
+              [class.providers__option--active]="form().provider === provider"
+              [attr.aria-checked]="form().provider === provider"
+              (click)="patch({ provider })"
             >
-              {{ 'SETTINGS.PRESET_' + preset.key.toUpperCase() | translate }}
+              <strong>
+                {{ 'SETTINGS.PROVIDER_' + provider.toUpperCase() | translate }}
+                @if (provider === 'gmail') {
+                  <span class="pill pill--success">{{ 'SETTINGS.RECOMMENDED' | translate }}</span>
+                }
+              </strong>
+              <small>{{
+                'SETTINGS.PROVIDER_' + provider.toUpperCase() + '_TEXT' | translate
+              }}</small>
             </button>
           }
         </div>
-        @if (form().host === 'smtp.gmail.com') {
-          <p class="hint">
-            <app-icon name="lock" [size]="14" />
-            <span>
-              {{ 'SETTINGS.GMAIL_HINT' | translate }}
-              <a
-                href="https://myaccount.google.com/apppasswords"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                myaccount.google.com/apppasswords
-              </a>
-            </span>
-          </p>
-        }
 
-        <div class="grid">
-          <label class="field grid__wide">
-            <span class="field__label">{{ 'SETTINGS.HOST' | translate }}</span>
-            <input
-              class="field__control"
-              name="host"
-              placeholder="smtp.exemplo.pt"
-              [ngModel]="form().host"
-              (ngModelChange)="patch({ host: $event })"
-            />
-          </label>
-          <label class="field">
-            <span class="field__label">{{ 'SETTINGS.PORT' | translate }}</span>
-            <input
-              class="field__control"
-              type="number"
-              name="port"
-              [ngModel]="form().port"
-              (ngModelChange)="setPort(+$event)"
-            />
-          </label>
-          <label class="field field--inline">
-            <input
-              type="checkbox"
-              name="secure"
-              [ngModel]="form().secure"
-              (ngModelChange)="patch({ secure: $event })"
-            />
-            <span>{{ 'SETTINGS.SECURE' | translate }}</span>
-          </label>
-
-          <label class="field">
-            <span class="field__label">{{ 'SETTINGS.USER' | translate }}</span>
-            <input
-              class="field__control"
-              name="user"
-              autocomplete="username"
-              [ngModel]="form().user"
-              (ngModelChange)="patch({ user: $event })"
-            />
-          </label>
-          <label class="field">
-            <span class="field__label">{{ 'SETTINGS.PASSWORD' | translate }}</span>
-            <span class="password">
-              <input
-                class="field__control"
-                name="password"
-                autocomplete="new-password"
-                [type]="showPassword() ? 'text' : 'password'"
-                [placeholder]="
-                  (hasStoredPassword() ? 'SETTINGS.PASSWORD_STORED' : 'SETTINGS.PASSWORD_EMPTY')
-                    | translate
-                "
-                [ngModel]="form().password"
-                (ngModelChange)="patch({ password: $event })"
-              />
+        @if (form().provider === 'gmail') {
+          <!-- Google account (OAuth 2.0 + Gmail API) -->
+          <div class="google" [class.google--connected]="saved()?.googleAccount">
+            <span class="google__logo" aria-hidden="true">G</span>
+            <div class="google__status">
+              @if (saved()?.googleAccount; as account) {
+                <strong>{{ 'SETTINGS.GOOGLE_CONNECTED_AS' | translate }}</strong>
+                <span>{{ account }}</span>
+              } @else {
+                <strong>{{ 'SETTINGS.GOOGLE_NOT_CONNECTED' | translate }}</strong>
+                <span>{{ 'SETTINGS.GOOGLE_NOT_CONNECTED_TEXT' | translate }}</span>
+              }
+            </div>
+            @if (saved()?.googleAccount) {
               <button
                 type="button"
-                class="password__toggle"
-                (click)="showPassword.set(!showPassword())"
+                class="button"
+                [disabled]="busy() !== null"
+                (click)="disconnectGoogle()"
               >
-                {{ (showPassword() ? 'SETTINGS.HIDE' : 'SETTINGS.SHOW') | translate }}
+                {{ 'SETTINGS.GOOGLE_DISCONNECT' | translate }}
               </button>
-            </span>
-            <small class="field__hint">
-              <app-icon name="lock" [size]="12" /> {{ 'SETTINGS.PASSWORD_HINT' | translate }}
-            </small>
-          </label>
+            } @else {
+              <button
+                type="button"
+                class="button button--primary"
+                [disabled]="busy() !== null || !form().googleClientId"
+                (click)="connectGoogle()"
+              >
+                @if (busy() === 'google') {
+                  <app-loader size="small" />
+                }
+                {{ 'SETTINGS.GOOGLE_CONNECT' | translate }}
+              </button>
+            }
+          </div>
+          <p class="hint">
+            <app-icon name="lock" [size]="14" />
+            <span>{{ 'SETTINGS.GOOGLE_SCOPE_HINT' | translate }}</span>
+          </p>
 
-          <label class="field">
-            <span class="field__label">{{ 'SETTINGS.FROM_NAME' | translate }}</span>
-            <input
-              class="field__control"
-              name="fromName"
-              [ngModel]="form().fromName"
-              (ngModelChange)="patch({ fromName: $event })"
-            />
-          </label>
-          <label class="field">
-            <span class="field__label">{{ 'SETTINGS.FROM_EMAIL' | translate }}</span>
-            <input
-              class="field__control"
-              type="email"
-              name="fromEmail"
-              [ngModel]="form().fromEmail"
-              (ngModelChange)="patch({ fromEmail: $event })"
-            />
-          </label>
-        </div>
+          <details class="guide" [open]="!saved()?.googleAccount && !saved()?.googleClientId">
+            <summary>{{ 'SETTINGS.GOOGLE_GUIDE_TITLE' | translate }}</summary>
+            <ol>
+              <li>
+                {{ 'SETTINGS.GOOGLE_STEP_1' | translate }}
+                <a
+                  href="https://console.cloud.google.com/projectcreate"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  console.cloud.google.com
+                </a>
+              </li>
+              <li>
+                {{ 'SETTINGS.GOOGLE_STEP_2' | translate }}
+                <a
+                  href="https://console.cloud.google.com/apis/library/gmail.googleapis.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >Gmail API</a
+                >
+              </li>
+              <li>{{ 'SETTINGS.GOOGLE_STEP_3' | translate }}</li>
+              <li>
+                {{ 'SETTINGS.GOOGLE_STEP_4' | translate }}
+                <span class="redirect">
+                  <code>{{ saved()?.googleRedirectUri }}</code>
+                  <button type="button" class="redirect__copy" (click)="copyRedirectUri()">
+                    <app-icon [name]="copied() ? 'check' : 'copy'" [size]="14" />
+                    {{ (copied() ? 'SETTINGS.COPIED' : 'SETTINGS.COPY') | translate }}
+                  </button>
+                </span>
+              </li>
+              <li>{{ 'SETTINGS.GOOGLE_STEP_5' | translate }}</li>
+            </ol>
+            <p class="guide__note">{{ 'SETTINGS.GOOGLE_TESTING_NOTE' | translate }}</p>
+          </details>
+
+          <div class="grid">
+            <label class="field grid__wide">
+              <span class="field__label">{{ 'SETTINGS.GOOGLE_CLIENT_ID' | translate }}</span>
+              <input
+                class="field__control"
+                name="googleClientId"
+                placeholder="1234567890-abc.apps.googleusercontent.com"
+                autocomplete="off"
+                [ngModel]="form().googleClientId"
+                (ngModelChange)="patch({ googleClientId: $event })"
+              />
+            </label>
+            <label class="field">
+              <span class="field__label">{{ 'SETTINGS.GOOGLE_CLIENT_SECRET' | translate }}</span>
+              <input
+                class="field__control"
+                name="googleClientSecret"
+                type="password"
+                autocomplete="new-password"
+                [placeholder]="
+                  (saved()?.hasGoogleClientSecret
+                    ? 'SETTINGS.PASSWORD_STORED'
+                    : 'SETTINGS.PASSWORD_EMPTY'
+                  ) | translate
+                "
+                [ngModel]="form().googleClientSecret"
+                (ngModelChange)="patch({ googleClientSecret: $event })"
+              />
+              <small class="field__hint">
+                <app-icon name="lock" [size]="12" /> {{ 'SETTINGS.PASSWORD_HINT' | translate }}
+              </small>
+            </label>
+            <label class="field">
+              <span class="field__label">{{ 'SETTINGS.FROM_NAME' | translate }}</span>
+              <input
+                class="field__control"
+                name="fromName"
+                [ngModel]="form().fromName"
+                (ngModelChange)="patch({ fromName: $event })"
+              />
+            </label>
+          </div>
+        } @else {
+          <!-- Classic SMTP account -->
+          <div class="presets">
+            <span class="field__label">{{ 'SETTINGS.PRESETS' | translate }}</span>
+            @for (preset of presets; track preset.key) {
+              <button
+                type="button"
+                class="chip"
+                [class.chip--active]="form().host === preset.host"
+                (click)="applyPreset(preset)"
+              >
+                {{ 'SETTINGS.PRESET_' + preset.key.toUpperCase() | translate }}
+              </button>
+            }
+          </div>
+          @if (form().host === 'smtp.gmail.com') {
+            <p class="hint">
+              <app-icon name="lock" [size]="14" />
+              <span>
+                {{ 'SETTINGS.GMAIL_HINT' | translate }}
+                <a
+                  href="https://myaccount.google.com/apppasswords"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  myaccount.google.com/apppasswords
+                </a>
+              </span>
+            </p>
+          }
+
+          <div class="grid">
+            <label class="field grid__wide">
+              <span class="field__label">{{ 'SETTINGS.HOST' | translate }}</span>
+              <input
+                class="field__control"
+                name="host"
+                placeholder="smtp.exemplo.pt"
+                [ngModel]="form().host"
+                (ngModelChange)="patch({ host: $event })"
+              />
+            </label>
+            <label class="field">
+              <span class="field__label">{{ 'SETTINGS.PORT' | translate }}</span>
+              <input
+                class="field__control"
+                type="number"
+                name="port"
+                [ngModel]="form().port"
+                (ngModelChange)="setPort(+$event)"
+              />
+            </label>
+            <label class="field field--inline">
+              <input
+                type="checkbox"
+                name="secure"
+                [ngModel]="form().secure"
+                (ngModelChange)="patch({ secure: $event })"
+              />
+              <span>{{ 'SETTINGS.SECURE' | translate }}</span>
+            </label>
+
+            <label class="field">
+              <span class="field__label">{{ 'SETTINGS.USER' | translate }}</span>
+              <input
+                class="field__control"
+                name="user"
+                autocomplete="username"
+                [ngModel]="form().user"
+                (ngModelChange)="patch({ user: $event })"
+              />
+            </label>
+            <label class="field">
+              <span class="field__label">{{ 'SETTINGS.PASSWORD' | translate }}</span>
+              <span class="password">
+                <input
+                  class="field__control"
+                  name="password"
+                  autocomplete="new-password"
+                  [type]="showPassword() ? 'text' : 'password'"
+                  [placeholder]="
+                    (saved()?.hasPassword ? 'SETTINGS.PASSWORD_STORED' : 'SETTINGS.PASSWORD_EMPTY')
+                      | translate
+                  "
+                  [ngModel]="form().password"
+                  (ngModelChange)="patch({ password: $event })"
+                />
+                <button
+                  type="button"
+                  class="password__toggle"
+                  (click)="showPassword.set(!showPassword())"
+                >
+                  {{ (showPassword() ? 'SETTINGS.HIDE' : 'SETTINGS.SHOW') | translate }}
+                </button>
+              </span>
+              <small class="field__hint">
+                <app-icon name="lock" [size]="12" /> {{ 'SETTINGS.PASSWORD_HINT' | translate }}
+              </small>
+            </label>
+
+            <label class="field">
+              <span class="field__label">{{ 'SETTINGS.FROM_NAME' | translate }}</span>
+              <input
+                class="field__control"
+                name="fromName"
+                [ngModel]="form().fromName"
+                (ngModelChange)="patch({ fromName: $event })"
+              />
+            </label>
+            <label class="field">
+              <span class="field__label">{{ 'SETTINGS.FROM_EMAIL' | translate }}</span>
+              <input
+                class="field__control"
+                type="email"
+                name="fromEmail"
+                [ngModel]="form().fromEmail"
+                (ngModelChange)="patch({ fromEmail: $event })"
+              />
+            </label>
+          </div>
+        }
       </section>
 
       <div class="actions">

@@ -3,6 +3,11 @@ import type { StoredSettings } from './mailer.ts';
 
 /** Starts in test mode so a fresh install can never email real businesses by accident. */
 export const DEFAULT_SETTINGS: StoredSettings = {
+  // Gmail API + OAuth is the recommended way; SMTP stays available for other providers.
+  provider: 'gmail',
+  googleClientId: '',
+  googleClientSecret: '',
+  googleAccount: null,
   host: '',
   port: 465,
   secure: true,

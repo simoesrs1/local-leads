@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import type {
   ApiError,
@@ -9,11 +9,20 @@ import type {
   SendEmailResult,
   TemplateVariable,
 } from '../src/app/models/email.model.ts';
+import { DEFAULT_SETTINGS } from './defaults.ts';
+import {
+  type Fetch,
+  type GoogleToken,
+  authorizationUrl,
+  exchangeCode,
+  revokeToken,
+} from './google.ts';
 import {
   type StoredSettings,
   type TransportFactory,
   fromHeader,
   mergeSettings,
+  normalizeSettings,
   resolveDelivery,
   smtpErrorKey,
   textToHtml,
@@ -27,7 +36,31 @@ export interface AppDeps {
   templates: Store<EmailTemplate[]>;
   variables: Store<TemplateVariable[]>;
   history: Store<HistoryEntry[]>;
+  googleToken: Store<GoogleToken | null>;
   transport: TransportFactory;
+  /** Injected so tests can fake Google's endpoints. */
+  fetch: Fetch;
+}
+
+const CALLBACK_PATH = '/api/auth/google/callback';
+const STATE_TTL_MS = 10 * 60 * 1000;
+
+/**
+ * Redirect URI as seen by the browser. Behind `ng serve` the proxy keeps the Host header,
+ * so this is e.g. http://localhost:4200/api/auth/google/callback.
+ */
+function redirectUri(req: Request): string {
+  const host = req.get('x-forwarded-host') ?? req.get('host');
+  const protocol = req.get('x-forwarded-proto') ?? req.protocol;
+  return `${protocol}://${host}${CALLBACK_PATH}`;
+}
+
+/** Back to the settings page with the outcome in the query string. */
+function settingsRedirect(result: 'connected' | 'error', reason?: string, detail?: string): string {
+  const params = new URLSearchParams({ google: result });
+  if (reason) params.set('reason', reason);
+  if (detail) params.set('detail', detail.slice(0, 300));
+  return `/settings?${params}`;
 }
 
 const KEY = /^[a-z][a-z0-9_]*$/;
@@ -47,14 +80,17 @@ class HttpError extends Error {
 export function createApp(deps: AppDeps): express.Express {
   const app = express();
   app.use(express.json({ limit: '1mb' }));
+  const readSettings = async () => normalizeSettings(await deps.settings.read(), DEFAULT_SETTINGS);
+  /** One-time OAuth `state` values (CSRF protection) with their redirect URI and expiry. */
+  const oauthStates = new Map<string, { redirectUri: string; expiresAt: number }>();
 
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true });
   });
 
   // ---- Settings (sensitive: the password is write-only) ----------------------------------
-  app.get('/api/settings', async (_req, res) => {
-    res.json(toPublicSettings(await deps.settings.read()));
+  app.get('/api/settings', async (req, res) => {
+    res.json(toPublicSettings(await readSettings(), redirectUri(req)));
   });
 
   app.put('/api/settings', async (req, res) => {
@@ -62,14 +98,20 @@ export function createApp(deps: AppDeps): express.Express {
     if (typeof update?.host !== 'string' || typeof update?.fromEmail !== 'string') {
       throw new HttpError(400, 'EMAIL_ERRORS.INVALID_REQUEST');
     }
-    const next = mergeSettings(await deps.settings.read(), update);
+    const current = await readSettings();
+    const next = mergeSettings(current, update);
+    // A token belongs to the OAuth client that issued it: changing the client disconnects.
+    if (next.googleClientId !== current.googleClientId && current.googleAccount) {
+      next.googleAccount = null;
+      await deps.googleToken.write(null);
+    }
     await deps.settings.write(next);
-    res.json(toPublicSettings(next));
+    res.json(toPublicSettings(next, redirectUri(req)));
   });
 
   /** Opens an SMTP connection and authenticates, without sending anything. */
   app.post('/api/settings/verify', async (_req, res) => {
-    const settings = await deps.settings.read();
+    const settings = await readSettings();
     const invalid = validateSettings(settings);
     if (invalid) throw new HttpError(400, invalid);
     try {
@@ -78,6 +120,63 @@ export function createApp(deps: AppDeps): express.Express {
       throw new HttpError(502, smtpErrorKey(settings, error), (error as Error).message);
     }
     res.json({ ok: true });
+  });
+
+  // ---- Google OAuth (Gmail API) -----------------------------------------------------------
+  /** Step 1: the browser navigates here and is redirected to Google's consent screen. */
+  app.get('/api/auth/google/start', async (req, res) => {
+    const settings = await readSettings();
+    if (!settings.googleClientId || !settings.googleClientSecret) {
+      res.redirect(settingsRedirect('error', 'EMAIL_ERRORS.GOOGLE_CLIENT_MISSING'));
+      return;
+    }
+    const state = randomBytes(24).toString('base64url');
+    const uri = redirectUri(req);
+    oauthStates.set(state, { redirectUri: uri, expiresAt: Date.now() + STATE_TTL_MS });
+    res.redirect(authorizationUrl(settings.googleClientId, uri, state));
+  });
+
+  /** Step 2: Google redirects back with a one-time code that is exchanged for tokens. */
+  app.get(CALLBACK_PATH, async (req, res) => {
+    const { code, state, error } = req.query as Record<string, string | undefined>;
+    const pending = state ? oauthStates.get(state) : undefined;
+    if (state) oauthStates.delete(state);
+
+    if (error) {
+      res.redirect(settingsRedirect('error', 'EMAIL_ERRORS.GOOGLE_DENIED', error));
+      return;
+    }
+    if (!code || !pending || pending.expiresAt < Date.now()) {
+      res.redirect(settingsRedirect('error', 'EMAIL_ERRORS.GOOGLE_STATE'));
+      return;
+    }
+
+    try {
+      const settings = await readSettings();
+      const token = await exchangeCode(
+        deps.fetch,
+        { clientId: settings.googleClientId, clientSecret: settings.googleClientSecret },
+        pending.redirectUri,
+        code,
+      );
+      await deps.googleToken.write(token);
+      await deps.settings.write({ ...settings, provider: 'gmail', googleAccount: token.email });
+      res.redirect(settingsRedirect('connected'));
+    } catch (failure) {
+      res.redirect(
+        settingsRedirect('error', 'EMAIL_ERRORS.GOOGLE_CONNECT_FAILED', (failure as Error).message),
+      );
+    }
+  });
+
+  /** Revokes the token at Google and forgets it locally. */
+  app.post('/api/auth/google/disconnect', async (req, res) => {
+    const token = await deps.googleToken.read();
+    if (token) await revokeToken(deps.fetch, token.refreshToken);
+    await deps.googleToken.write(null);
+    const settings = { ...(await readSettings()), googleAccount: null };
+    await deps.settings.write(settings);
+    res.json(toPublicSettings(settings, redirectUri(req)));
   });
 
   // ---- Templates & variables (not sensitive, stored as whole lists) ----------------------
@@ -132,7 +231,7 @@ export function createApp(deps: AppDeps): express.Express {
       throw new HttpError(400, 'EMAIL_ERRORS.INVALID_REQUEST');
     }
 
-    const settings = await deps.settings.read();
+    const settings = await readSettings();
     const invalid = validateSettings(settings);
     if (invalid) throw new HttpError(400, invalid);
 

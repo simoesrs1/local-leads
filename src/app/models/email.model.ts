@@ -14,19 +14,33 @@ export interface SmtpSettings {
   fromEmail: string;
 }
 
-/** Settings as returned to the browser: the password never leaves the server. */
-export interface EmailSettings extends SmtpSettings {
-  hasPassword: boolean;
+/** How emails are sent: Gmail API with OAuth (recommended) or a classic SMTP account. */
+export type EmailProvider = 'gmail' | 'smtp';
+
+/** Settings shared by the browser view and the browser update. */
+interface CommonSettings extends SmtpSettings {
+  provider: EmailProvider;
+  /** OAuth client id from Google Cloud Console (not secret). */
+  googleClientId: string;
   /** When true, every email goes to `testEmail` instead of the business. */
   testMode: boolean;
   testEmail: string;
 }
 
-/** Settings sent by the browser. An empty/missing `password` keeps the stored one. */
-export interface EmailSettingsUpdate extends SmtpSettings {
+/** Settings as returned to the browser: passwords, secrets and tokens never leave the server. */
+export interface EmailSettings extends CommonSettings {
+  hasPassword: boolean;
+  hasGoogleClientSecret: boolean;
+  /** Gmail address authorised through OAuth, or null when not connected. */
+  googleAccount: string | null;
+  /** Redirect URI to register in Google Cloud Console (depends on the URL the app runs on). */
+  googleRedirectUri: string;
+}
+
+/** Settings sent by the browser. Empty/missing secrets keep the stored ones. */
+export interface EmailSettingsUpdate extends CommonSettings {
   password?: string;
-  testMode: boolean;
-  testEmail: string;
+  googleClientSecret?: string;
 }
 
 /** Lead data a template variable can be bound to. */

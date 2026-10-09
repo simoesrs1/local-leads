@@ -10,6 +10,7 @@ import { memoryStore } from './store.ts';
 
 const configured: StoredSettings = {
   ...DEFAULT_SETTINGS,
+  provider: 'smtp',
   host: 'smtp.example.com',
   user: 'me@example.com',
   password: 'secret-password',
@@ -47,7 +48,9 @@ describe('email API', () => {
       templates: memoryStore(DEFAULT_TEMPLATES),
       variables: memoryStore(DEFAULT_VARIABLES),
       history,
+      googleToken: memoryStore(null),
       transport,
+      fetch: () => Promise.reject(new Error('no network in tests')),
     });
     server = app.listen(0);
     await new Promise((resolve) => server.once('listening', resolve));
@@ -132,7 +135,7 @@ describe('email API', () => {
   });
 
   it('refuses to send while SMTP is not configured', async () => {
-    await settings.write(DEFAULT_SETTINGS);
+    await settings.write({ ...DEFAULT_SETTINGS, provider: 'smtp' });
     const response = await call('/api/email/send', 'POST', {
       leadId: 'a',
       to: 'a@b.pt',

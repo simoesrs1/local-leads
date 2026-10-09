@@ -34,7 +34,8 @@ every email to your own inbox so you can check everything first.
   - templates with placeholders such as `{{nome_cliente}}`, edited with a live preview;
   - a variables window where each label ("Nome Cliente" → `{{nome_cliente}}`) is bound to a lead field
     (name, type, email, phone, website, address, searched locality) or to a fixed text;
-  - settings page for the SMTP account (presets for Gmail / Microsoft 365, connection test);
+  - sending through a **Google account (OAuth 2.0 + Gmail API, recommended)** — no password stored, only a
+    revocable token limited to the `gmail.send` scope — or through any **SMTP** account;
   - **test mode** (on by default): every email goes to your own address with a `[TESTE]` subject.
     It is enforced by the server, so the browser cannot bypass it.
   - **send history** (`/history`): every email is logged; real sends mark the business as
@@ -57,14 +58,30 @@ npm run build         # production build in dist/
 
 ### Email server
 
-Browsers cannot talk SMTP, and the email password must not live in the front end, so emails are sent by a
-small Node server in `server/` (Express + Nodemailer). `ng serve` proxies `/api` to it (`proxy.conf.json`).
+Emails are sent by a small Node server in `server/` (Express + Nodemailer), so credentials and tokens never
+live in the front end. `ng serve` proxies `/api` to it (`proxy.conf.json`).
 
-- It listens on `127.0.0.1` only, so the credentials are not reachable from the network.
-- Settings, templates, variables and the send history are stored as JSON in `server/data/` (git-ignored). The settings
-  file is written with `0600` permissions and the password is never sent back to the browser.
-- For Gmail, enable 2-step verification and create an **app password**; use it instead of your normal
-  password.
+- It listens on `127.0.0.1` only, so credentials and tokens are not reachable from the network.
+- Settings, templates, variables and the send history are stored as JSON in `server/data/` (git-ignored).
+  Secret files (`settings.json`, `google-token.json`) are written with `0600` permissions; passwords,
+  the OAuth client secret and tokens are never sent back to the browser.
+
+### Sending with a Google account (recommended)
+
+1. In [Google Cloud Console](https://console.cloud.google.com/) create a project and enable the **Gmail API**.
+2. In *Google Auth Platform*, configure the consent screen (External) and add your Gmail address as a test user.
+3. Create an OAuth client of type **Web application** with the redirect URI shown in the app's Settings page
+   (with `npm run dev`: `http://localhost:4200/api/auth/google/callback`).
+4. Paste the Client ID and Client Secret in **Settings**, save and click **Connect Google account**.
+
+The app only requests `gmail.send` (it cannot read the mailbox). While the Google app is in *Testing*, Google
+expires the refresh token after 7 days; publish the app (an "unverified app" warning is fine for personal use)
+to keep the connection.
+
+### Sending with SMTP
+
+Choose **SMTP server** in Settings and fill in host, port, user and password. For Gmail over SMTP an
+**app password** is required (2-step verification on).
 
 To enable Google Places, set `googlePlacesApiKey` in `src/environments/environment.ts` and restrict the key
 by HTTP referrer in the Google Cloud Console. Do not commit real keys.

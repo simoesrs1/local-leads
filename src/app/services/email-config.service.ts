@@ -35,6 +35,18 @@ export class EmailConfigService {
     this.settings.set(await firstValueFrom(this.api.saveSettings(update)));
   }
 
+  /**
+   * Starts the Google OAuth flow. Must be a full page navigation (not XHR): the server
+   * redirects to Google's consent screen, which redirects back to /settings.
+   */
+  connectGoogle(): void {
+    window.location.href = '/api/auth/google/start';
+  }
+
+  async disconnectGoogle(): Promise<void> {
+    this.settings.set(await firstValueFrom(this.api.disconnectGoogle()));
+  }
+
   async saveTemplates(templates: EmailTemplate[]): Promise<void> {
     this.templates.set(await firstValueFrom(this.api.saveTemplates(templates)));
   }

@@ -56,6 +56,10 @@ describe('translations', () => {
       'SETTINGS.PRESET_OFFICE365',
       ...['ANY', 'WITH', 'WITHOUT'].map((option) => `FILTERS.CONTACTED_${option}`),
       ...['ALL', 'LIVE', 'TEST'].map((mode) => `HISTORY.MODE_${mode}`),
+      ...['GMAIL', 'SMTP'].flatMap((provider) => [
+        `SETTINGS.PROVIDER_${provider}`,
+        `SETTINGS.PROVIDER_${provider}_TEXT`,
+      ]),
     ];
     expect([...dynamic, ...homeSections, ...emailKeys].filter((key) => !(key in en))).toEqual([]);
   });

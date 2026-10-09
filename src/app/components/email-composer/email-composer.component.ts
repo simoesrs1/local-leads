@@ -55,11 +55,16 @@ export class EmailComposerComponent {
   protected readonly testMode = computed(() => this.config.settings()?.testMode ?? true);
   protected readonly testAddress = computed(() => {
     const settings = this.config.settings();
-    return settings?.testEmail || settings?.fromEmail || '';
+    const sender = settings?.provider === 'gmail' ? settings.googleAccount : settings?.fromEmail;
+    return settings?.testEmail || sender || '';
   });
+  /** Gmail needs a connected Google account; SMTP needs a server and a sender. */
   protected readonly smtpReady = computed(() => {
     const settings = this.config.settings();
-    return !!settings?.host && !!settings.fromEmail;
+    if (!settings) return false;
+    return settings.provider === 'gmail'
+      ? !!settings.googleAccount
+      : !!settings.host && !!settings.fromEmail;
   });
 
   /** One rendered email per selected lead. */

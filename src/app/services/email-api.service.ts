@@ -25,6 +25,10 @@ export class EmailApiService {
     return this.http.put<EmailSettings>('/api/settings', update);
   }
 
+  disconnectGoogle(): Observable<EmailSettings> {
+    return this.http.post<EmailSettings>('/api/auth/google/disconnect', {});
+  }
+
   verifySettings(): Observable<{ ok: true }> {
     return this.http.post<{ ok: true }>('/api/settings/verify', {});
   }

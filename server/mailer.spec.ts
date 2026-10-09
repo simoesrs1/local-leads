@@ -13,6 +13,8 @@ describe('textToHtml', () => {
 
 describe('Gmail login helpers', () => {
   const update = {
+    provider: 'smtp' as const,
+    googleClientId: '',
     host: 'smtp.gmail.com',
     port: 465,
     secure: true,
